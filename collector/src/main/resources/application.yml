@@ -1,13 +1,14 @@
 target:
-  woowahan:
-    url: https://www.woowahan.com
-    adapter:
-      fetcher: HttpFetcher
-      crawler: HtmlCrawler
-      extractor: DefaultExtractor
-  toss:
-    url: https://toss.im
-    adapter:
-      fetcher: HttpFetcher
-      crawler: HtmlCrawler
-      extractor: DefaultExtractor
+  entries:
+    woowahan:
+      url: https://www.woowahan.com
+      adapter:
+        fetcher: httpFetcher
+        crawler: htmlCrawler
+        extractor: defaultExtractor
+    toss:
+      url: https://toss.im
+      adapter:
+        fetcher: httpFetcher
+        crawler: htmlCrawler
+        extractor: defaultExtractor
