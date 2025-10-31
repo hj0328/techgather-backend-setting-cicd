@@ -12,8 +12,8 @@ class HtmlCrawler(
 ): Crawler {
     override fun crawl(collectCommand: CollectCommand): CrawlingResult {
 
-        TODO("Not yet implemented")
-        //html 파일 가져오기
-//        return httpFetcher.fetch(collectCommand.url)
+        val html = httpFetcher.fetch(collectCommand.url)
+
+        return CrawlingResult(html)
     }
 }

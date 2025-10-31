@@ -16,15 +16,21 @@ class CollectorFactory (
     fun createCollector(target: String, config: TargetProps): Collector {
 
         //adapterProvider 에서 config 에 설정된 crawler 가져오기
-        val crawler = adapterProvider.getCrawler(config.adapter.crawler)
+        val crawler = adapterProvider.getCrawler(config.adapter.crawler.type)
         //adapterProvider 에서 config 에 설정된 extractor 가져오기
-        val extractor = adapterProvider.getExtractor(config.adapter.extractor)
+        val extractor = adapterProvider.getExtractor(config.adapter.extractor.type)
         //engine 생성
         val engine = CollectEngine(crawler, extractor, deduplicatePort, publisher)
 
         return Collector(
             name = target,
-            collectionTask = CollectionTask(url = config.url),
+            collectionTask = CollectionTask(
+                url = config.url,
+                extractTask = ExtractTask(
+                    useDefaultThumbnail = config.adapter.extractor.useDefaultThumbnail,
+                    defaultThumbnail = config.adapter.extractor.defaultThumbnail
+                )
+            ),
             engine = engine
         )
     }

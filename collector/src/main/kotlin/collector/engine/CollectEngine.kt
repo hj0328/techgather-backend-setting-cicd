@@ -18,7 +18,7 @@ class CollectEngine(
         val crawlingResult = crawler.crawl(command)
 
         //messages 추출
-        val messages = extractor.extract(crawlingResult)
+        val messages = extractor.extract(crawlingResult, command.extractCommand)
 
         //중복 제거
         val deduplicatedMessages = deduplicatePort.deduplicate(messages)

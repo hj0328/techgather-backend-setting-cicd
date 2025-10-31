@@ -7,6 +7,6 @@ import org.springframework.stereotype.Component
 @Component
 class KafkaPublisher: Publisher {
     override fun publish(messages: List<Message>) {
-        TODO("Not yet implemented")
+        println(messages)
     }
 }

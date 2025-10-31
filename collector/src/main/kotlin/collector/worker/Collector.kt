@@ -2,6 +2,7 @@ package collector.worker
 
 import collector.engine.CollectEngine
 import collector.engine.command.CollectCommand
+import collector.engine.command.ExtractCommand
 
 class Collector(
     val name: String,
@@ -11,7 +12,15 @@ class Collector(
 
     fun collectWork() {
 
-        val command = CollectCommand(collectionTask.url)
+        val command = CollectCommand(
+            url = collectionTask.url,
+            extractCommand = collectionTask.extractTask.let {
+                ExtractCommand(
+                    it.useDefaultThumbnail,
+                    it.defaultThumbnail
+                )
+            }
+        )
 
         engine.run(command)
     }

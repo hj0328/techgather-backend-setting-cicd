@@ -1,8 +1,9 @@
 package collector.engine.port
 
+import collector.engine.command.ExtractCommand
 import collector.engine.model.Message
 import collector.engine.port.dto.CrawlingResult
 
 interface Extractor {
-    fun extract(crawlingResult: CrawlingResult): List<Message>
+    fun extract(crawlingResult: CrawlingResult, extractCommand: ExtractCommand): List<Message>
 }

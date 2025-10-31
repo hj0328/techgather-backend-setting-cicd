@@ -2,17 +2,27 @@ package collector.worker.config
 
 import org.springframework.boot.context.properties.ConfigurationProperties
 
-data class AdapterProps(
-    var fetcher: String = "",
-    var crawler: String = "",
-    var extractor: String = "",
-)
-data class TargetProps(
-    var url: String = "",
-    var adapter: AdapterProps = AdapterProps()
-)
-
 @ConfigurationProperties(prefix = "target")
 class TargetProperties(
     var entries: Map<String, TargetProps> = emptyMap()
+)
+
+data class TargetProps(
+    var url: String = "",
+    var adapter: AdapterProps,
+)
+
+data class AdapterProps(
+    var crawler: CrawlerProps,
+    var extractor: ExtractorProps,
+)
+
+data class CrawlerProps(
+    var type: String,
+)
+
+data class ExtractorProps(
+    var type: String,
+    var useDefaultThumbnail: Boolean = false,
+    var defaultThumbnail: String? = null
 )

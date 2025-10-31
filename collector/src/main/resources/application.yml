@@ -1,14 +1,20 @@
 target:
   entries:
-    woowahan:
-      url: https://www.woowahan.com
-      adapter:
-        fetcher: httpFetcher
-        crawler: htmlCrawler
-        extractor: defaultExtractor
+#    woowahan:
+#      url: https://techblog.woowahan.com/feed
+#      adapter:
+#        crawler:
+#          type: htmlCrawler
+#        extractor:
+#          type: rssExtractor
+#          useDefaultThumbnail: true
+#          defaultThumbnail: https://techblog.woowahan.com/wp-content/uploads/2022/01/woowahan-logo.png
     toss:
-      url: https://toss.im
+      url: https://toss.tech/rss.xml
       adapter:
-        fetcher: httpFetcher
-        crawler: htmlCrawler
-        extractor: defaultExtractor
+        crawler:
+          type: htmlCrawler
+        extractor:
+          type: rssExtractor
+          useDefaultThumbnail: false
+          defaultThumbnail: ""
