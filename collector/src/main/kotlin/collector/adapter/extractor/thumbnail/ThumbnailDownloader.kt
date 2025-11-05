@@ -14,16 +14,12 @@ class ThumbnailDownloader(
 
     suspend fun download(url: String): String? {
 
-        log.info("Downloading thumbnail from $url")
-
         val html = fetcher.fetch(url)
 
         val document = Jsoup.parse(html)
 
         // head 내부의 og:image 메타 태그 찾기
         val ogImage = document.select("meta[property=og:image]").attr("content")
-
-        log.info("Thumbnail downloaded: $ogImage")
 
         return ogImage.ifBlank { null }
     }

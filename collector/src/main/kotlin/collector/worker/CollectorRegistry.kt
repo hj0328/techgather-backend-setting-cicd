@@ -21,14 +21,15 @@ class CollectorRegistry(
     fun registerWorkers() {
         //worker 등록
         props.entries.forEach { (target, config) ->
-
-            //worker 생성
-            collectors.add(collectorFactory.createCollector(target, config))
-            //TODO: worker 생성 실패 시 에러 핸들링
+            if(props.actives.contains(target)) {
+                //worker 생성
+                collectors.add(collectorFactory.createCollector(target, config))
+                //TODO: worker 생성 실패 시 에러 핸들링
+            }
         }
     }
 
-    @Scheduled(fixedDelay = 10_000)
+    @Scheduled(fixedDelay = 1_000 * 60 * 60) //1시간 주기
     fun executeAll() = runBlocking {
         coroutineScope {
             collectors.map { collector ->

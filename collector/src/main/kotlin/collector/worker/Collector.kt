@@ -13,6 +13,7 @@ class Collector(
     suspend fun collectWork() {
 
         val command = CollectCommand(
+            name = name,
             url = collectionTask.url,
             extractCommand = collectionTask.extractTask.let {
                 ExtractCommand(

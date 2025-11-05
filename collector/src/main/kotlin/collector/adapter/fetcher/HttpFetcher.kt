@@ -15,7 +15,7 @@ class HttpFetcher: Fetcher {
     private val client = HttpClient(CIO) {
         expectSuccess = false
         engine {
-            requestTimeout = 5000
+            requestTimeout = 30000
         }
     }
 

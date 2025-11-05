@@ -4,6 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 
 @ConfigurationProperties(prefix = "target")
 class TargetProperties(
+    var actives: List<String>,
     var entries: Map<String, TargetProps> = emptyMap()
 )
 

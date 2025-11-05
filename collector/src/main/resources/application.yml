@@ -9,6 +9,7 @@ spring:
         spring.json.add.type.headers: false
 
 target:
+  actives: woowahan,toss,musinsa,kurly,kakao,devsisters,line,daangn,watcha
   entries:
     woowahan:
       url: https://techblog.woowahan.com/feed
@@ -28,3 +29,94 @@ target:
           type: rssExtractor
           useDefaultThumbnail: false
           defaultThumbnail: ""
+    musinsa:
+      url: https://medium.com/feed/musinsa-tech
+      adapter:
+        crawler:
+          type: htmlCrawler
+        extractor:
+          type: rssExtractor
+          useDefaultThumbnail: false
+          defaultThumbnail: ""
+#    naver: version 이 다름 (1.0)
+#      url: https://d2.naver.com/d2.atom
+#      adapter:
+#        crawler:
+#          type: htmlCrawler
+#        extractor:
+#          type: rssExtractor
+#          useDefaultThumbnail: false
+#          defaultThumbnail: ""
+    kurly:
+      url: https://helloworld.kurly.com/feed.xml
+      adapter:
+        crawler:
+          type: htmlCrawler
+        extractor:
+          type: rssExtractor
+          useDefaultThumbnail: false
+          defaultThumbnail: ""
+    kakao:
+      url: https://tech.kakaoenterprise.com/feed
+      adapter:
+        crawler:
+          type: htmlCrawler
+        extractor:
+          type: rssExtractor
+          useDefaultThumbnail: false
+          defaultThumbnail: ""
+    devsisters:
+      url: https://tech.devsisters.com/rss.xml
+      adapter:
+        crawler:
+          type: htmlCrawler
+        extractor:
+          type: rssExtractor
+          useDefaultThumbnail: false
+          defaultThumbnail: ""
+    line:
+      url: https://engineering.linecorp.com/ko/feed/index.html
+      adapter:
+        crawler:
+          type: htmlCrawler
+        extractor:
+          type: rssExtractor
+          useDefaultThumbnail: false
+          defaultThumbnail: ""
+#    coupang: # 페이지 자체의 파싱 에러
+#      url: https://medium.com/feed/coupang-engineering
+#      adapter:
+#        crawler:
+#          type: htmlCrawler
+#        extractor:
+#          type: rssExtractor
+#          useDefaultThumbnail: false
+#          defaultThumbnail: ""
+    daangn:
+      url: https://medium.com/feed/daangn
+      adapter:
+        crawler:
+          type: htmlCrawler
+        extractor:
+          type: rssExtractor
+          useDefaultThumbnail: false
+          defaultThumbnail: ""
+#    zigbang: # 페이지 자체의 파싱 에러
+#      url: https://medium.com/feed/zigbang
+#      adapter:
+#        crawler:
+#          type: htmlCrawler
+#        extractor:
+#          type: rssExtractor
+#          useDefaultThumbnail: false
+#          defaultThumbnail: ""
+    watcha:
+      url: https://medium.com/feed/watcha
+      adapter:
+        crawler:
+          type: htmlCrawler
+        extractor:
+          type: rssExtractor
+          useDefaultThumbnail: false
+          defaultThumbnail: ""
+

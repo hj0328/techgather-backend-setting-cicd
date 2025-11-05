@@ -18,7 +18,6 @@ class KafkaPublisher(
         messages.forEach { message ->
             try {
                 kafkaTemplate.send(property.topic, message.url, message)
-                log.info("Message published to Kafka topic '${property.topic}': ${message.title}")
             } catch (e: Exception) {
                 log.error("Failed to publish message to Kafka: ${message.title}", e)
             }
