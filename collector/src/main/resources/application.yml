@@ -1,14 +1,14 @@
 target:
   entries:
-#    woowahan:
-#      url: https://techblog.woowahan.com/feed
-#      adapter:
-#        crawler:
-#          type: htmlCrawler
-#        extractor:
-#          type: rssExtractor
-#          useDefaultThumbnail: true
-#          defaultThumbnail: https://techblog.woowahan.com/wp-content/uploads/2022/01/woowahan-logo.png
+    woowahan:
+      url: https://techblog.woowahan.com/feed
+      adapter:
+        crawler:
+          type: htmlCrawler
+        extractor:
+          type: rssExtractor
+          useDefaultThumbnail: true
+          defaultThumbnail: https://techblog.woowahan.com/wp-content/uploads/2022/01/woowahan-logo.png
     toss:
       url: https://toss.tech/rss.xml
       adapter:

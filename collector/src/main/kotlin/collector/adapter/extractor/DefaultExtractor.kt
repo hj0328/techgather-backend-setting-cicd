@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class DefaultExtractor: Extractor {
-    override fun extract(crawlingResult: CrawlingResult, extractCommand: ExtractCommand): List<Message> {
+    override suspend fun extract(crawlingResult: CrawlingResult, extractCommand: ExtractCommand): List<Message> {
         TODO("Not yet implemented")
     }
 }

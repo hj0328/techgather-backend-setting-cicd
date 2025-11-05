@@ -5,5 +5,5 @@ import collector.engine.command.CollectCommand
 
 interface Crawler {
 
-    fun crawl(collectCommand: CollectCommand): CrawlingResult
+    suspend fun crawl(collectCommand: CollectCommand): CrawlingResult
 }

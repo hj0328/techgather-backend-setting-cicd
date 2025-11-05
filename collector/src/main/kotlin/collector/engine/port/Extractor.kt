@@ -5,5 +5,5 @@ import collector.engine.model.Message
 import collector.engine.port.dto.CrawlingResult
 
 interface Extractor {
-    fun extract(crawlingResult: CrawlingResult, extractCommand: ExtractCommand): List<Message>
+    suspend fun extract(crawlingResult: CrawlingResult, extractCommand: ExtractCommand): List<Message>
 }

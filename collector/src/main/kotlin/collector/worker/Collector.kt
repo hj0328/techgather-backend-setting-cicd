@@ -10,7 +10,7 @@ class Collector(
     val engine: CollectEngine,
 ) {
 
-    fun collectWork() {
+    suspend fun collectWork() {
 
         val command = CollectCommand(
             url = collectionTask.url,

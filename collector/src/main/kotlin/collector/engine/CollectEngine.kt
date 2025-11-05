@@ -12,7 +12,7 @@ class CollectEngine(
     private val deduplicatePort: DeduplicatePort,
     private val publisher: Publisher,
 ) {
-    fun run(command: CollectCommand) {
+    suspend fun run(command: CollectCommand) {
 
         // 크롤링 후 message 추출
         val crawlingResult = crawler.crawl(command)

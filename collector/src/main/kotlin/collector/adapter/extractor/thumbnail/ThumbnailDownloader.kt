@@ -12,7 +12,7 @@ class ThumbnailDownloader(
 
     private val log = LoggerFactory.getLogger(this::class.java)
 
-    fun download(url: String): String? {
+    suspend fun download(url: String): String? {
 
         log.info("Downloading thumbnail from $url")
 

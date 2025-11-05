@@ -7,6 +7,8 @@ import org.springframework.stereotype.Component
 @Component
 class KafkaPublisher: Publisher {
     override fun publish(messages: List<Message>) {
-        println(messages)
+        messages.forEach {
+            println(it)
+        }
     }
 }

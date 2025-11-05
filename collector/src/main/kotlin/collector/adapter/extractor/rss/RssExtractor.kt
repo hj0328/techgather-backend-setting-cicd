@@ -6,6 +6,9 @@ import collector.engine.model.Message
 import collector.engine.port.Extractor
 import collector.engine.port.dto.CrawlingResult
 import com.fasterxml.jackson.dataformat.xml.XmlMapper
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import org.springframework.stereotype.Component
 
 @Component
@@ -15,23 +18,25 @@ class RssExtractor(
 
     private val xmlMapper = XmlMapper().findAndRegisterModules()
 
-    override fun extract(crawlingResult: CrawlingResult, extractCommand: ExtractCommand): List<Message> {
+    override suspend fun extract(crawlingResult: CrawlingResult, extractCommand: ExtractCommand): List<Message> = coroutineScope {
 
         val rss = xmlMapper.readValue(crawlingResult.body, Rss::class.java)
 
-        return rss.channel.items?.map {
-            Message(
-                title = it.title,
-                url = it.link,
-                pubDate = it.pubDate,
-                tags = it.categories ?: listOf(),
-                description = it.description,
-                thumbnail = getThumbnail(it.link, extractCommand)
-            )
-        }?.toList() ?: emptyList()
+        return@coroutineScope rss.channel.items?.map { item ->
+            async {
+                Message(
+                    title = item.title,
+                    url = item.link,
+                    pubDate = item.pubDate,
+                    tags = item.categories ?: listOf(),
+                    description = item.description,
+                    thumbnail = getThumbnail(item.link, extractCommand)
+                )
+            }
+        }?.awaitAll() ?: emptyList()
     }
 
-    private fun getThumbnail(url: String, command: ExtractCommand): String? {
+    private suspend fun getThumbnail(url: String, command: ExtractCommand): String? {
 
         if(command.useDefaultThumbnail) return command.defaultThumbnail
 

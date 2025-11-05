@@ -2,6 +2,10 @@ package collector.worker
 
 import collector.worker.config.TargetProperties
 import jakarta.annotation.PostConstruct
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.runBlocking
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 
@@ -25,12 +29,15 @@ class CollectorRegistry(
     }
 
     @Scheduled(fixedDelay = 10_000)
-    fun executeAll() {
-        collectors.forEach {
-            it.collectWork()
+    fun executeAll() = runBlocking {
+        coroutineScope {
+            collectors.map { collector ->
+                async {
+                    collector.collectWork()
+                }
+            }.awaitAll()
         }
 
         //TODO: worker 실행 실패 시 에러 핸들링
-        //TODO: coroutine 을 적용한 병렬 실행
     }
 }

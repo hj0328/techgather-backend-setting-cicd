@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 class HtmlCrawler(
     private val httpFetcher: HttpFetcher,
 ): Crawler {
-    override fun crawl(collectCommand: CollectCommand): CrawlingResult {
+    override suspend fun crawl(collectCommand: CollectCommand): CrawlingResult {
 
         val html = httpFetcher.fetch(collectCommand.url)
 

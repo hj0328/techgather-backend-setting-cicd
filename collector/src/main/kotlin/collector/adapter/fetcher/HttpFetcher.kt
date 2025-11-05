@@ -4,7 +4,9 @@ import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import org.springframework.stereotype.Component
 
 @Component
@@ -17,12 +19,16 @@ class HttpFetcher: Fetcher {
         }
     }
 
-    override fun fetch(urls: List<String>): List<String> {
-        TODO("Not yet implemented")
+    override suspend fun fetch(urls: List<String>): List<String> = coroutineScope {
+        urls.map { url ->
+            async {
+                fetch(url)
+            }
+        }.awaitAll()
     }
 
-    override fun fetch(url: String): String = runBlocking {
+    override suspend fun fetch(url: String): String {
         val response: HttpResponse = client.get(url)
-        response.bodyAsText()
+        return response.bodyAsText()
     }
 }
