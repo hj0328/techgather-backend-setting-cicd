@@ -18,8 +18,6 @@ repositories {
 
 dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
-	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 
 	implementation("io.ktor:ktor-client-core:3.3.0")
 	implementation("io.ktor:ktor-client-cio:3.3.0")
@@ -27,10 +25,18 @@ dependencies {
 	implementation("io.ktor:ktor-serialization-jackson:3.3.0")
 
 	implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml")
-
+	implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	//html 파싱
 	implementation("org.jsoup:jsoup:1.17.2")
 	implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+	//kafka
+	implementation("org.springframework.kafka:spring-kafka")
+
+	//test
+	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 kotlin {
