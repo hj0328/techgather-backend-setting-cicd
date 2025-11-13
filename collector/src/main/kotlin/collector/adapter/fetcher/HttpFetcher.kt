@@ -16,6 +16,10 @@ class HttpFetcher: Fetcher {
         expectSuccess = false
         engine {
             requestTimeout = 30000
+            endpoint {
+                connectTimeout = 30000
+                socketTimeout = 30000
+            }
         }
     }
 
