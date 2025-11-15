@@ -1,0 +1,45 @@
+server:
+  port: 7500
+
+spring:
+  profiles:
+    active: local
+
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: batch-consumer-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+      topic: post
+      poll-timeout: 5000
+      max-empty-polls: 3
+
+  batch:
+    chunk:
+      size: 100
+    job:
+      enabled: false
+    jdbc:
+      initialize-schema: always
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/techgather
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: techgather
+    password: techgather
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 30
+        order_inserts: true
+        order_updates: true
+        format_sql: true
