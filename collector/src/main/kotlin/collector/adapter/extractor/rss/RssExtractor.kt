@@ -3,7 +3,6 @@ package collector.adapter.extractor.rss
 import collector.adapter.extractor.thumbnail.ThumbnailDownloader
 import collector.engine.command.ExtractCommand
 import collector.engine.model.Message
-import collector.engine.port.Extractor
 import collector.engine.port.dto.CrawlingResult
 import com.fasterxml.jackson.dataformat.xml.XmlMapper
 import kotlinx.coroutines.async
@@ -12,13 +11,13 @@ import kotlinx.coroutines.coroutineScope
 import org.springframework.stereotype.Component
 
 @Component
-class RssExtractor(
+open class RssExtractor(
     private val thumbnailDownloader: ThumbnailDownloader,
-): Extractor {
+): RetryableExtractor() {
 
     private val xmlMapper = XmlMapper().findAndRegisterModules()
 
-    override suspend fun extract(crawlingResult: CrawlingResult, extractCommand: ExtractCommand): List<Message> = coroutineScope {
+    override suspend fun doExtract(crawlingResult: CrawlingResult, extractCommand: ExtractCommand): List<Message> = coroutineScope {
 
         val rss = xmlMapper.readValue(crawlingResult.body, Rss::class.java)
 
