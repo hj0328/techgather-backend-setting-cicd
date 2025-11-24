@@ -16,11 +16,14 @@ open class RssExtractor(
 ): RetryableExtractor() {
 
     private val xmlMapper = XmlMapper().findAndRegisterModules()
+    private val illegalXmlCharsRegex = Regex("[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F]")
 
     override suspend fun doExtract(crawlingResult: CrawlingResult, extractCommand: ExtractCommand): List<Message> = coroutineScope {
 
-        val rss = xmlMapper.readValue(crawlingResult.body, Rss::class.java)
+        val sanitizedBody = illegalXmlCharsRegex.replace(crawlingResult.body, "")
 
+        val rss = xmlMapper.readValue(sanitizedBody, Rss::class.java)
+        
         return@coroutineScope rss.channel.items?.map { item ->
             async {
                 Message(
