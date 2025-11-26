@@ -86,28 +86,36 @@ public class RssFeedWriter implements ItemWriter<RssFeedMessage> {
 	private void savePostTags(List<RssFeedMessage> items) {
 		TagNormalizerUtils normalizer = TagNormalizerUtils.getInstance();
 
-		Map<String, List<RssFeedMessage>> urlToMessageMap = items.stream()
+		Map<String, List<String>> urlToTagsMap = items.stream()
 				.filter(msg -> msg.tags() != null && !msg.tags().isEmpty())
-				.collect(Collectors.groupingBy(RssFeedMessage::url));
-
-		Map<String, List<String>> urlToTagMap = urlToMessageMap.entrySet().stream()
+				.collect(Collectors.groupingBy(
+					RssFeedMessage::url,
+					Collectors.flatMapping(
+						msg -> msg.tags().stream().map(normalizer::normalize),
+						Collectors.toList()
+					)
+				))
+				.entrySet().stream()
 				.collect(Collectors.toMap(
 					Map.Entry::getKey,
-					entry -> entry.getValue().stream()
-							.flatMap(msg -> msg.tags().stream())
-							.map(normalizer::normalize)
-							.distinct()
-							.toList()));
+					entry -> entry.getValue().stream().distinct().toList()
+				));
 
-		if (!urlToTagMap.isEmpty()) {
-			List<String> allUrls = new ArrayList<>(urlToTagMap.keySet());
-			List<String> allTags = urlToTagMap.values().stream()
-					.flatMap(List::stream)
-					.distinct()
-					.toList();
-
-			customPostTagRepository.saveAllUrlAndTag(allUrls, allTags);
+		if (urlToTagsMap.isEmpty()) {
+			return;
 		}
+
+		List<String> allUrls = new ArrayList<>();
+		List<String> allTags = new ArrayList<>();
+
+		urlToTagsMap.forEach((url, tags) ->
+			tags.forEach(tag -> {
+				allUrls.add(url);
+				allTags.add(tag);
+			})
+		);
+
+		customPostTagRepository.saveAllUrlAndTag(allUrls, allTags);
 	}
 
 	private List<Post> convertToPosts(List<RssFeedMessage> items) {
