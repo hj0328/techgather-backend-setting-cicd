@@ -1,48 +1,64 @@
 package domain.entity;
 
-import domain.common.BaseTime;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
-@Table(name = "posts")
+@Table(name = "post", indexes = {
+	@Index(name = "idx_post_url", columnList = "url", unique = true)
+})
 @Getter
-@Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@AllArgsConstructor
-public class Post extends BaseTime {
+@EqualsAndHashCode(of = "url")
+public class Post {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "post_seq")
-    @SequenceGenerator(
-        name = "post_seq",
-        sequenceName = "post_sequence",
-        allocationSize = 30
-    )
-    private Long id;
+	@Id
+	private Long postId;
 
-    @Column(nullable = false, length = 200)
-    private String title;
+	private String title;
 
-    @Column(nullable = false, unique = true, length = 500)
-    private String url;
+	@Lob
+	@Column(columnDefinition = "TEXT", unique = true)
+	private String url;
 
-    @Column(nullable = false)
-    private LocalDateTime pubDate;
+	@Column(name = "pub_date")
+	private LocalDateTime pubDate;
 
-    @ElementCollection
-    @CollectionTable(name = "post_tags", joinColumns = @JoinColumn(name = "post_id"))
-    @Column(name = "tag")
-    private List<String> tags = new ArrayList<>();
+	@Lob
+	@Column(columnDefinition = "TEXT")
+	private String description;
 
-    @Column(columnDefinition = "TEXT")
-    private String description;
+	@Lob
+	@Column(columnDefinition = "TEXT")
+	private String thumbnail;
 
-    @Column(length = 500)
-    private String thumbnail;
+	@OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+	private Set<PostTag> postTags = new HashSet<>();
 
+	public static Post create(Long postId,
+							  String title,
+							  String url,
+							  LocalDateTime pubDate,
+							  String description,
+							  String thumbnail) {
+		Post post = new Post();
+		post.postId = postId;
+		post.title = title;
+		post.url = url;
+		post.pubDate = pubDate;
+		post.description = description;
+		post.thumbnail = thumbnail;
+		return post;
+	}
+
+	public void addTag(Tag tag) {
+		if (tag == null) {
+			return;
+		}
+		PostTag.create(this, tag);
+	}
 }

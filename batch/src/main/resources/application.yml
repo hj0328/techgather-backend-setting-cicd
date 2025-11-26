@@ -31,15 +31,21 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     username: techgather
     password: techgather
+    hikari:
+      maximum-pool-size: 10
 
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
+    open-in-view: false
     properties:
       hibernate:
         jdbc:
-          batch_size: 30
+          batch_size: 100
+          fetch_size: 100
         order_inserts: true
         order_updates: true
-        format_sql: true
+        format_sql: false
+        batch_versioned_data: true
+        generate_statistics: false

@@ -17,4 +17,5 @@ dependencies {
     runtimeOnly 'com.mysql:mysql-connector-j'
 
     implementation project(':domain')
+    implementation project(':application')
 }

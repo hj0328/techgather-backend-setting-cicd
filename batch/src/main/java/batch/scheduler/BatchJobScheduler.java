@@ -1,3 +1,4 @@
+
 package batch.scheduler;
 
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +28,7 @@ public class BatchJobScheduler {
         this.rssFeedsCollectJob = rssFeedsCollectJob;
     }
 
-    @Scheduled(cron = "*/10 * * * * *")
+    @Scheduled(cron = "*/10 * * * * *")  //TODO 10초마다 실행(주기는 정해지면 바꿔야 합니다.)
     public void runRssFeedsCollectJob() {
         try {
             String createDate = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));

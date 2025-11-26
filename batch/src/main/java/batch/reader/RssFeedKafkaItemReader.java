@@ -32,7 +32,7 @@ public class RssFeedKafkaItemReader {
         return new KafkaItemReaderBuilder<String, RssFeedMessage>()
                 .name("rss-kafka-item-reader")
                 .topic(topic)
-                .partitions(0)	//TODO 차후 확장 시 다중 파티션 지원이 필요할 수 있습니다.
+                .partitions(0)  // 현재 단일 파티션 지원. 추후 확장 시 다중 파티션 지원 필요
                 .consumerProperties(kafkaConsumerProperties)
                 .pollTimeout(Duration.ofMillis(pollTimeout))
                 .saveState(true)

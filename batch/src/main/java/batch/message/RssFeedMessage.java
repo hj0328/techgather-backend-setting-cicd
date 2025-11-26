@@ -1,12 +1,12 @@
 package batch.message;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Set;
 
 public record RssFeedMessage(String title,
 							 String url,
 							 LocalDateTime pubDate,
-							 List<String> tags,
+							 Set<String> tags,
 							 String description,
 							 String thumbnail) {
 

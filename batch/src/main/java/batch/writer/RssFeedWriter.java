@@ -1,59 +1,125 @@
 package batch.writer;
 
+import application.generator.SnowFlake;
 import batch.message.RssFeedMessage;
 import domain.entity.Post;
-import domain.repository.PostRepository;
-import lombok.RequiredArgsConstructor;
+import domain.entity.Tag;
+import domain.repository.CustomPostRepository;
+import domain.repository.CustomPostTagRepository;
+import domain.repository.CustomTagRepository;
+import domain.util.TagNormalizerUtils;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Component
 @StepScope
-@RequiredArgsConstructor
 public class RssFeedWriter implements ItemWriter<RssFeedMessage> {
 
-    private final PostRepository postRepository;
+	private final CustomPostRepository customPostRepository;
+	private final CustomPostTagRepository customPostTagRepository;
+	private final CustomTagRepository customTagRepository;
+	private final SnowFlake snowflake = SnowFlake.getInstance();
 
-    @Override
-    public void write(Chunk<? extends RssFeedMessage> chunk) {
-        if (chunk.isEmpty()) {
-            return;
-        }
+	public RssFeedWriter(CustomPostRepository customPostRepository,
+						 CustomPostTagRepository customPostTagRepository,
+						 CustomTagRepository customTagRepository) {
+		this.customPostRepository = customPostRepository;
+		this.customPostTagRepository = customPostTagRepository;
+		this.customTagRepository = customTagRepository;
+	}
 
-        try {
-            Map<String, RssFeedMessage> urlMap = chunk.getItems().stream()
-                    .collect(Collectors.toMap(
-                            RssFeedMessage::url,
-                            msg -> msg,
-                            (existing, replacement) -> existing
-                    ));
+	@Override
+	public void write(Chunk<? extends RssFeedMessage> chunk) {
+		if (chunk.isEmpty()) {
+			return;
+		}
 
-            List<String> urls = List.copyOf(urlMap.keySet());
-            List<String> existingUrls = postRepository.findUrlsByUrlIn(urls);
+		processItems(chunk);
+	}
 
-            var newMessages = urlMap.values().stream()
-                    .filter(msg -> !existingUrls.contains(msg.url()))
-                    .toList();
+	private void processItems(Chunk<? extends RssFeedMessage> chunk) {
+		List<RssFeedMessage> validItems = new ArrayList<>();
 
-            List<Post> posts = newMessages.stream()
-						.map(message -> Post.builder()
-						.title(message.title())
-						.url(message.url())
-						.pubDate(message.pubDate())
-						.tags(message.tags() != null ? message.tags() : List.of())
-						.description(message.description())
-						.thumbnail(message.thumbnail())
-						.build())
-						.toList();
-            postRepository.saveAll(posts);
-        } catch (Exception e) {
-            throw new RuntimeException(e);	//TODO application 모듈 서 응답 스펙 정의되면 다시 수정해야합니다.
-        }
-    }
+		for (var item : chunk) {
+			validItems.add(item);
+		}
+
+		if (validItems.isEmpty()) {
+			return;
+		}
+
+		processTagsAndPosts(validItems);
+	}
+
+	private void processTagsAndPosts(List<RssFeedMessage> items) {
+		List<String> tagNames = extractTagNames(items);
+		if (!CollectionUtils.isEmpty(tagNames)) {
+			List<Tag> tags = tagNames.stream()
+					.map(name -> Tag.create(snowflake.nextId(), name))
+					.toList();
+			customTagRepository.saveAll(tags);
+		}
+
+		List<Post> posts = convertToPosts(items);
+		if (!CollectionUtils.isEmpty(posts)) {
+			customPostRepository.saveAll(posts);
+		}
+		savePostTags(items);
+	}
+
+	private List<String> extractTagNames(List<RssFeedMessage> items) {
+		TagNormalizerUtils normalizer = TagNormalizerUtils.getInstance();
+		return items.stream()
+				.filter(msg -> msg.tags() != null && !msg.tags().isEmpty())
+				.flatMap(msg -> msg.tags().stream())
+				.map(normalizer::normalize)
+				.distinct()
+				.toList();
+	}
+
+	private void savePostTags(List<RssFeedMessage> items) {
+		TagNormalizerUtils normalizer = TagNormalizerUtils.getInstance();
+
+		Map<String, List<RssFeedMessage>> urlToMessageMap = items.stream()
+				.filter(msg -> msg.tags() != null && !msg.tags().isEmpty())
+				.collect(Collectors.groupingBy(RssFeedMessage::url));
+
+		Map<String, List<String>> urlToTagMap = urlToMessageMap.entrySet().stream()
+				.collect(Collectors.toMap(
+					Map.Entry::getKey,
+					entry -> entry.getValue().stream()
+							.flatMap(msg -> msg.tags().stream())
+							.map(normalizer::normalize)
+							.distinct()
+							.toList()));
+
+		if (!urlToTagMap.isEmpty()) {
+			List<String> allUrls = new ArrayList<>(urlToTagMap.keySet());
+			List<String> allTags = urlToTagMap.values().stream()
+					.flatMap(List::stream)
+					.distinct()
+					.toList();
+
+			customPostTagRepository.saveAllUrlAndTag(allUrls, allTags);
+		}
+	}
+
+	private List<Post> convertToPosts(List<RssFeedMessage> items) {
+		return items.stream()
+				.map(msg -> Post.create(
+						snowflake.nextId(),
+						msg.title(),
+						msg.url(),
+						msg.pubDate(),
+						msg.description(),
+						msg.thumbnail()
+				))
+				.toList();
+	}
 }
