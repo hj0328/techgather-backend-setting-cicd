@@ -8,6 +8,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import org.springframework.stereotype.Component
+import java.security.cert.X509Certificate
+import javax.net.ssl.X509TrustManager
 
 @Component
 class HttpFetcher: Fetcher {
@@ -19,6 +21,13 @@ class HttpFetcher: Fetcher {
             endpoint {
                 connectTimeout = 30000
                 socketTimeout = 30000
+            }
+            https {
+                trustManager = object : X509TrustManager {
+                    override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+                    override fun checkClientTrusted(chain: Array<X509Certificate>, authType: String) {}
+                    override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {}
+                }
             }
         }
     }
