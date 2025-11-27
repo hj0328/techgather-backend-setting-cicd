@@ -29,16 +29,5 @@ class CollectorRegistry(
         }
     }
 
-    @Scheduled(fixedDelay = 1_000 * 60 * 60) //1시간 주기
-    fun executeAll() = runBlocking {
-        coroutineScope {
-            collectors.map { collector ->
-                async {
-                    collector.collectWork()
-                }
-            }.awaitAll()
-        }
-
-        //TODO: worker 실행 실패 시 에러 핸들링
-    }
+    fun getCollectors(): List<Collector> = collectors
 }
