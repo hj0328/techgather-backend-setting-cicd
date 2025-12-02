@@ -64,9 +64,9 @@ jobs:
       - name: Build authentication
         run: ./gradlew :authentication:clean :authentication:build
 
-      # development → docker build
+      # development, master 브랜치 → docker build
       - name: Docker Build (auth)
-        if: github.ref == 'refs/heads/development'
+        if: github.ref == 'refs/heads/development' || github.ref == 'refs/heads/master'
         run: |
           docker build -t ${{ secrets.DOCKER_REPO }}/authentication:latest authentication/
 
@@ -91,7 +91,7 @@ jobs:
         run: ./gradlew :api:clean :api:build
 
       - name: Docker Build (api)
-        if: github.ref == 'refs/heads/development'
+        if: github.ref == 'refs/heads/development' || github.ref == 'refs/heads/master'
         run: docker build -t ${{ secrets.DOCKER_REPO }}/api:latest api/
 
       - name: Docker Push (api)
@@ -114,7 +114,7 @@ jobs:
         run: ./gradlew :batch:clean :batch:build
 
       - name: Docker Build (batch)
-        if: github.ref == 'refs/heads/development'
+        if: github.ref == 'refs/heads/development' || github.ref == 'refs/heads/master'
         run: docker build -t ${{ secrets.DOCKER_REPO }}/batch:latest batch/
 
       - name: Docker Push (batch)
@@ -137,7 +137,7 @@ jobs:
         run: ./gradlew :collector:bootJar --no-daemon
 
       - name: Docker Build (collector)
-        if: github.ref == 'refs/heads/development'
+        if: github.ref == 'refs/heads/development' || github.ref == 'refs/heads/master'
         run: |
           docker build -f collector/Dockerfile -t ${{ secrets.DOCKER_REPO }}/collector:latest .
 
