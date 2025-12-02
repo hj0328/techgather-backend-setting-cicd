@@ -2,83 +2,178 @@ name: CI
 
 on:
   push:
-    branches: [ "feature/cicd"]
-  pull_request:
-    branches: [ "feature/cicd"]
+    branches:
+      - "feature/*"
+      - "development"
+      - "master"
+
+  workflow_dispatch:
+    inputs:
+      target_service:
+        type: choice
+        description: "배포할 서비스 선택"
+        options:
+          - all
+          - authentication
+          - api
+          - batch
+          - collector
 
 jobs:
-
-  build-api:
-    name: API Docker Build
+  detect_changes:
     runs-on: ubuntu-latest
+    outputs:
+      auth_changed: ${{ steps.filter.outputs.auth }}
+      api_changed: ${{ steps.filter.outputs.api }}
+      batch_changed: ${{ steps.filter.outputs.batch }}
+      collector_changed: ${{ steps.filter.outputs.collector }}
+      common_changed: ${{ steps.filter.outputs.common }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      # 변경 파일 감지(paths-filter)
+      - uses: dorny/paths-filter@v3
+        id: filter
         with:
-          distribution: temurin
-          java-version: "17"
+          filters: |
+            auth:
+              - 'authentication/**'
+            api:
+              - 'api/**'
+            batch:
+              - 'batch/**'
+            collector:
+              - 'collector/**'
+            common:
+              - 'application/**'
+              - 'domain/**'
 
-      - name: Build API jar
-        run: ./gradlew :api:bootJar --no-daemon
-
-      - name: Build API Docker Image
-        run: |
-          docker build -f api/Dockerfile -t api-ci api/
-
-
-  build-batch:
-    name: Batch Docker Build
+  # authentication / api / batch / collector 각각 별도 Job
+  build_authentication:
+    needs: detect_changes
     runs-on: ubuntu-latest
+    if: needs.detect_changes.outputs.auth_changed == 'true' || needs.detect_changes.outputs.common_changed == 'true'
+
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: 17
 
-      - name: Build Batch jar
-        run: ./gradlew :batch:bootJar --no-daemon
+      - name: Build authentication
+        run: ./gradlew :authentication:clean :authentication:build
 
-      - name: Build Batch Docker Image
+      # development → docker build
+      - name: Docker Build (auth)
+        if: github.ref == 'refs/heads/development'
         run: |
-          docker build -f batch/Dockerfile -t batch-ci batch/
+          docker build -t ${{ secrets.DOCKER_REPO }}/authentication:latest authentication/
 
+      # master → docker push
+      - name: Docker Push (auth)
+        if: github.ref == 'refs/heads/master'
+        run: docker push ${{ secrets.DOCKER_REPO }}/authentication:latest
 
-  build-collector:
-    name: Collector Docker Build
+  build_api:
+    needs: detect_changes
     runs-on: ubuntu-latest
+    if: needs.detect_changes.outputs.api_changed == 'true' || needs.detect_changes.outputs.common_changed == 'true'
+
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: 17
 
-      - name: Build Collector Docker Image
-        run: |
-          docker build -f collector/Dockerfile -t collector-ci .
+      - name: Build api
+        run: ./gradlew :api:clean :api:build
 
-  build-authentication:
-    name: Authentication Docker Build
+      - name: Docker Build (api)
+        if: github.ref == 'refs/heads/development'
+        run: docker build -t ${{ secrets.DOCKER_REPO }}/api:latest api/
+
+      - name: Docker Push (api)
+        if: github.ref == 'refs/heads/master'
+        run: docker push ${{ secrets.DOCKER_REPO }}/api:latest
+
+  build_batch:
+    needs: detect_changes
     runs-on: ubuntu-latest
+    if: needs.detect_changes.outputs.batch_changed == 'true' || needs.detect_changes.outputs.common_changed == 'true'
+
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
+      - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: 17
 
-      - name: Build Authentication jar
-        run: ./gradlew :authentication:bootJar --no-daemon
+      - name: Build batch
+        run: ./gradlew :batch:clean :batch:build
 
-      - name: Build Authentication Docker Image
+      - name: Docker Build (batch)
+        if: github.ref == 'refs/heads/development'
+        run: docker build -t ${{ secrets.DOCKER_REPO }}/batch:latest batch/
+
+      - name: Docker Push (batch)
+        if: github.ref == 'refs/heads/master'
+        run: docker push ${{ secrets.DOCKER_REPO }}/batch:latest
+
+  build_collector:
+    needs: detect_changes
+    runs-on: ubuntu-latest
+    if: needs.detect_changes.outputs.collector_changed == 'true' || needs.detect_changes.outputs.common_changed == 'true'
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Build collector
+        run: ./gradlew :collector:bootJar --no-daemon
+
+      - name: Docker Build (collector)
+        if: github.ref == 'refs/heads/development'
         run: |
-          docker build -f authentication/Dockerfile -t authentication-ci authentication/
+          docker build -f collector/Dockerfile -t ${{ secrets.DOCKER_REPO }}/collector:latest .
+
+      - name: Docker Push (collector)
+        if: github.ref == 'refs/heads/master'
+        run: docker push ${{ secrets.DOCKER_REPO }}/collector:latest
+
+  # DEPLOY JOB (workflow_dispatch)
+  deploy:
+    needs: [build_authentication, build_api, build_batch, build_collector]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Deploy to EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_KEY }} ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
+          
+            if [[ "${{ github.event.inputs.target_service }}" == "all" || "${{ github.event.inputs.target_service }}" == "authentication" ]]; then
+              docker pull ${{ secrets.DOCKER_REPO }}/authentication:latest
+            fi
+
+            if [[ "${{ github.event.inputs.target_service }}" == "all" || "${{ github.event.inputs.target_service }}" == "api" ]]; then
+              docker pull ${{ secrets.DOCKER_REPO }}/api:latest
+            fi
+
+            if [[ "${{ github.event.inputs.target_service }}" == "all" || "${{ github.event.inputs.target_service }}" == "batch" ]]; then
+              docker pull ${{ secrets.DOCKER_REPO }}/batch:latest
+            fi
+
+            if [[ "${{ github.event.inputs.target_service }}" == "all" || "${{ github.event.inputs.target_service }}" == "collector" ]]; then
+              docker pull ${{ secrets.DOCKER_REPO }}/collector:latest
+            fi
+
+            cd /home/ec2-user/tech-gather
+            docker compose down
+            docker compose up -d --remove-orphans
+
+          EOF
