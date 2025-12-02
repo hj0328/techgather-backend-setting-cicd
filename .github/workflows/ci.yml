@@ -52,7 +52,8 @@ jobs:
   build_authentication:
     needs: detect_changes
     runs-on: ubuntu-latest
-    if: needs.detect_changes.outputs.auth_changed == 'true' || needs.detect_changes.outputs.common_changed == 'true'
+    if: startsWith(github.ref, 'refs/heads/feature/cicd') ||
+      needs.detect_changes.outputs.auth_changed == 'true' || needs.detect_changes.outputs.common_changed == 'true'
 
     steps:
       - uses: actions/checkout@v4
