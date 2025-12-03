@@ -47,18 +47,6 @@ jobs:
               - 'application/**'
               - 'domain/**'
 
-  # DockerHub Login (master 전용)
-  login_dockerhub:
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
-
-    steps:
-      - name: DockerHub Login
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
   build_authentication:
     needs: detect_changes
     runs-on: ubuntu-latest
@@ -83,6 +71,12 @@ jobs:
             -t ${{ secrets.DOCKER_REPO }}:authentication-${{ github.sha }} \
             authentication/
 
+      - name: DockerHub Login
+        if: github.ref == 'refs/heads/master'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Docker Push (authentication)
         if: github.ref == 'refs/heads/master'
         run: |
@@ -113,6 +107,12 @@ jobs:
             -t ${{ secrets.DOCKER_REPO }}:api-${{ github.sha }} \
             api/
 
+      - name: DockerHub Login
+        if: github.ref == 'refs/heads/master'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Docker Push (api)
         if: github.ref == 'refs/heads/master'
         run: |
@@ -143,6 +143,12 @@ jobs:
             -t ${{ secrets.DOCKER_REPO }}:batch-${{ github.sha }} \
             batch/
 
+      - name: DockerHub Login
+        if: github.ref == 'refs/heads/master'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Docker Push (batch)
         if: github.ref == 'refs/heads/master'
         run: |
@@ -173,6 +179,12 @@ jobs:
             -t ${{ secrets.DOCKER_REPO }}:collector-${{ github.sha }} \
             .
 
+      - name: DockerHub Login
+        if: github.ref == 'refs/heads/master'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Docker Push (collector)
         if: github.ref == 'refs/heads/master'
         run: |
