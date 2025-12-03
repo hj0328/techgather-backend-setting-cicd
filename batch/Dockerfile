@@ -13,4 +13,4 @@ COPY --from=build batch/snapshot-dependencies/ ./
 RUN true
 COPY --from=build batch/application/ ./
 ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
-#
+##
