@@ -60,7 +60,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
   build_authentication:
-    needs: [detect_changes, login_dockerhub]
+    needs: detect_changes
     runs-on: ubuntu-latest
     if: needs.detect_changes.outputs.auth_changed == 'true' ||
       needs.detect_changes.outputs.common_changed == 'true'
@@ -90,7 +90,7 @@ jobs:
           docker push ${{ secrets.DOCKER_REPO }}/authentication:${{ github.sha }}
 
   build_api:
-    needs: [detect_changes, login_dockerhub]
+    needs: detect_changes
     runs-on: ubuntu-latest
     if: needs.detect_changes.outputs.api_changed == 'true' ||
       needs.detect_changes.outputs.common_changed == 'true'
@@ -120,7 +120,7 @@ jobs:
           docker push ${{ secrets.DOCKER_REPO }}/api:${{ github.sha }}
 
   build_batch:
-    needs: [detect_changes, login_dockerhub]
+    needs: detect_changes
     runs-on: ubuntu-latest
     if: needs.detect_changes.outputs.batch_changed == 'true' ||
       needs.detect_changes.outputs.common_changed == 'true'
@@ -150,7 +150,7 @@ jobs:
           docker push ${{ secrets.DOCKER_REPO }}/batch:${{ github.sha }}
 
   build_collector:
-    needs: [detect_changes, login_dockerhub]
+    needs: detect_changes
     runs-on: ubuntu-latest
     if: needs.detect_changes.outputs.collector_changed == 'true' ||
       needs.detect_changes.outputs.common_changed == 'true'
@@ -181,7 +181,8 @@ jobs:
 
   # DEPLOY (workflow_dispatch 전용)
   deploy:
-    needs: [build_authentication, build_api, build_batch, build_collector]
+    # needs: [build_authentication, build_api, build_batch, build_collector]
+    needs: [ build_authentication, build_api ]
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch'
 
