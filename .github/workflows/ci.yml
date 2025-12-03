@@ -1,4 +1,4 @@
-name: CI
+name: CICD
 
 on:
   push:
@@ -199,6 +199,11 @@ jobs:
     if: github.event_name == 'workflow_dispatch'
 
     steps:
+      - name: Create SSH key file
+        run: |
+          echo "${{ secrets.EC2_KEY }}" > ec2_key.pem
+          chmod 600 ec2_key.pem
+          
       - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_KEY }} ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
