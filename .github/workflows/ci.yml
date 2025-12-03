@@ -16,8 +16,8 @@ on:
           - all
           - authentication
           - api
-          - batch
-          - collector
+#          - batch
+#          - collector
 
 jobs:
   detect_changes:
@@ -31,7 +31,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 변경 파일 감지(paths-filter)
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -48,11 +47,23 @@ jobs:
               - 'application/**'
               - 'domain/**'
 
-  # authentication / api / batch / collector 각각 별도 Job
-  build_authentication:
-    needs: detect_changes
+  # DockerHub Login (master 전용)
+  login_dockerhub:
     runs-on: ubuntu-latest
-    if: needs.detect_changes.outputs.auth_changed == 'true' || needs.detect_changes.outputs.common_changed == 'true'
+    if: github.ref == 'refs/heads/master'
+
+    steps:
+      - name: DockerHub Login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+  build_authentication:
+    needs: [detect_changes, login_dockerhub]
+    runs-on: ubuntu-latest
+    if: needs.detect_changes.outputs.auth_changed == 'true' ||
+      needs.detect_changes.outputs.common_changed == 'true'
 
     steps:
       - uses: actions/checkout@v4
@@ -62,30 +73,27 @@ jobs:
           java-version: 17
 
       - name: Build authentication
-        run: ./gradlew :authentication:clean :authentication:build
+        run: ./gradlew :authentication:clean :authentication:build --no-daemon
 
-      # development, master 브랜치 → docker build
-      - name: Docker Build (auth)
+      - name: Docker Build (authentication)
         if: github.ref == 'refs/heads/development' || github.ref == 'refs/heads/master'
         run: |
-          docker build -t ${{ secrets.DOCKER_REPO }}:authentication-latest authentication/
+          docker build \
+            -t ${{ secrets.DOCKER_REPO }}/authentication:latest \
+            -t ${{ secrets.DOCKER_REPO }}/authentication:${{ github.sha }} \
+            authentication/
 
-      - name: DockerHub Login
+      - name: Docker Push (authentication)
         if: github.ref == 'refs/heads/master'
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      # master → docker push
-      - name: Docker Push (auth)
-        if: github.ref == 'refs/heads/master'
-        run: docker push ${{ secrets.DOCKER_REPO }}:authentication-latest
+        run: |
+          docker push ${{ secrets.DOCKER_REPO }}/authentication:latest
+          docker push ${{ secrets.DOCKER_REPO }}/authentication:${{ github.sha }}
 
   build_api:
-    needs: detect_changes
+    needs: [detect_changes, login_dockerhub]
     runs-on: ubuntu-latest
-    if: needs.detect_changes.outputs.api_changed == 'true' || needs.detect_changes.outputs.common_changed == 'true'
+    if: needs.detect_changes.outputs.api_changed == 'true' ||
+      needs.detect_changes.outputs.common_changed == 'true'
 
     steps:
       - uses: actions/checkout@v4
@@ -95,27 +103,27 @@ jobs:
           java-version: 17
 
       - name: Build api
-        run: ./gradlew :api:clean :api:build
+        run: ./gradlew :api:clean :api:build --no-daemon
 
       - name: Docker Build (api)
         if: github.ref == 'refs/heads/development' || github.ref == 'refs/heads/master'
-        run: docker build -t ${{ secrets.DOCKER_REPO }}:api-latest api/
-
-      - name: DockerHub Login
-        if: github.ref == 'refs/heads/master'
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+        run: |
+          docker build \
+            -t ${{ secrets.DOCKER_REPO }}/api:latest \
+            -t ${{ secrets.DOCKER_REPO }}/api:${{ github.sha }} \
+            api/
 
       - name: Docker Push (api)
         if: github.ref == 'refs/heads/master'
-        run: docker push ${{ secrets.DOCKER_REPO }}:api-latest
+        run: |
+          docker push ${{ secrets.DOCKER_REPO }}/api:latest
+          docker push ${{ secrets.DOCKER_REPO }}/api:${{ github.sha }}
 
   build_batch:
-    needs: detect_changes
+    needs: [detect_changes, login_dockerhub]
     runs-on: ubuntu-latest
-    if: needs.detect_changes.outputs.batch_changed == 'true' || needs.detect_changes.outputs.common_changed == 'true'
+    if: needs.detect_changes.outputs.batch_changed == 'true' ||
+      needs.detect_changes.outputs.common_changed == 'true'
 
     steps:
       - uses: actions/checkout@v4
@@ -125,27 +133,27 @@ jobs:
           java-version: 17
 
       - name: Build batch
-        run: ./gradlew :batch:clean :batch:build
+        run: ./gradlew :batch:clean :batch:build --no-daemon
 
       - name: Docker Build (batch)
         if: github.ref == 'refs/heads/development' || github.ref == 'refs/heads/master'
-        run: docker build -t ${{ secrets.DOCKER_REPO }}:batch-latest batch/
-
-      - name: DockerHub Login
-        if: github.ref == 'refs/heads/master'
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+        run: |
+          docker build \
+            -t ${{ secrets.DOCKER_REPO }}/batch:latest \
+            -t ${{ secrets.DOCKER_REPO }}/batch:${{ github.sha }} \
+            batch/
 
       - name: Docker Push (batch)
         if: github.ref == 'refs/heads/master'
-        run: docker push ${{ secrets.DOCKER_REPO }}:batch-latest
+        run: |
+          docker push ${{ secrets.DOCKER_REPO }}/batch:latest
+          docker push ${{ secrets.DOCKER_REPO }}/batch:${{ github.sha }}
 
   build_collector:
-    needs: detect_changes
+    needs: [detect_changes, login_dockerhub]
     runs-on: ubuntu-latest
-    if: needs.detect_changes.outputs.collector_changed == 'true' || needs.detect_changes.outputs.common_changed == 'true'
+    if: needs.detect_changes.outputs.collector_changed == 'true' ||
+      needs.detect_changes.outputs.common_changed == 'true'
 
     steps:
       - uses: actions/checkout@v4
@@ -160,20 +168,18 @@ jobs:
       - name: Docker Build (collector)
         if: github.ref == 'refs/heads/development' || github.ref == 'refs/heads/master'
         run: |
-          docker build -f collector/Dockerfile -t ${{ secrets.DOCKER_REPO }}:collector-latest .
-
-      - name: DockerHub Login
-        if: github.ref == 'refs/heads/master'
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          docker build -f collector/Dockerfile \
+            -t ${{ secrets.DOCKER_REPO }}/collector:latest \
+            -t ${{ secrets.DOCKER_REPO }}/collector:${{ github.sha }} \
+            .
 
       - name: Docker Push (collector)
         if: github.ref == 'refs/heads/master'
-        run: docker push ${{ secrets.DOCKER_REPO }}:collector-latest
+        run: |
+          docker push ${{ secrets.DOCKER_REPO }}/collector:latest
+          docker push ${{ secrets.DOCKER_REPO }}/collector:${{ github.sha }}
 
-  # DEPLOY JOB (workflow_dispatch)
+  # DEPLOY (workflow_dispatch 전용)
   deploy:
     needs: [build_authentication, build_api, build_batch, build_collector]
     runs-on: ubuntu-latest
@@ -183,25 +189,25 @@ jobs:
       - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_KEY }} ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
-          
-            if [[ "${{ github.event.inputs.target_service }}" == "all" || "${{ github.event.inputs.target_service }}" == "authentication" ]]; then
-              docker pull ${{ secrets.DOCKER_REPO }}:authentication-latest
-            fi
 
-            if [[ "${{ github.event.inputs.target_service }}" == "all" || "${{ github.event.inputs.target_service }}" == "api" ]]; then
-              docker pull ${{ secrets.DOCKER_REPO }}:api-latest
-            fi
+          if [[ "${{ github.event.inputs.target_service }}" == "all" || "${{ github.event.inputs.target_service }}" == "authentication" ]]; then
+            docker pull ${{ secrets.DOCKER_REPO }}/authentication:latest
+          fi
 
-            if [[ "${{ github.event.inputs.target_service }}" == "all" || "${{ github.event.inputs.target_service }}" == "batch" ]]; then
-              docker pull ${{ secrets.DOCKER_REPO }}:batch-latest
-            fi
+          if [[ "${{ github.event.inputs.target_service }}" == "all" || "${{ github.event.inputs.target_service }}" == "api" ]]; then
+            docker pull ${{ secrets.DOCKER_REPO }}/api:latest
+          fi
 
-            if [[ "${{ github.event.inputs.target_service }}" == "all" || "${{ github.event.inputs.target_service }}" == "collector" ]]; then
-              docker pull ${{ secrets.DOCKER_REPO }}:collector-latest
-            fi
+          # if [[ "${{ github.event.inputs.target_service }}" == "all" || "${{ github.event.inputs.target_service }}" == "batch" ]]; then
+          #   docker pull ${{ secrets.DOCKER_REPO }}/batch:latest
+          # fi
 
-            cd /home/ec2-user/tech-gather
-            docker compose down
-            docker compose up -d --remove-orphans
+          # if [[ "${{ github.event.inputs.target_service }}" == "all" || "${{ github.event.inputs.target_service }}" == "collector" ]]; then
+          #   docker pull ${{ secrets.DOCKER_REPO }}/collector:latest
+          # fi
+
+          cd /home/ec2-user/tech-gather
+          docker compose down
+          docker compose up -d --remove-orphans
 
           EOF
