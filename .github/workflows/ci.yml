@@ -79,15 +79,15 @@ jobs:
         if: github.ref == 'refs/heads/development' || github.ref == 'refs/heads/master'
         run: |
           docker build \
-            -t ${{ secrets.DOCKER_REPO }}/authentication:latest \
-            -t ${{ secrets.DOCKER_REPO }}/authentication:${{ github.sha }} \
+            -t ${{ secrets.DOCKER_REPO }}:authentication-latest \
+            -t ${{ secrets.DOCKER_REPO }}:authentication-${{ github.sha }} \
             authentication/
 
       - name: Docker Push (authentication)
         if: github.ref == 'refs/heads/master'
         run: |
-          docker push ${{ secrets.DOCKER_REPO }}/authentication:latest
-          docker push ${{ secrets.DOCKER_REPO }}/authentication:${{ github.sha }}
+          docker push ${{ secrets.DOCKER_REPO }}:authentication-latest
+          docker push ${{ secrets.DOCKER_REPO }}:authentication-${{ github.sha }}
 
   build_api:
     needs: detect_changes
@@ -109,15 +109,15 @@ jobs:
         if: github.ref == 'refs/heads/development' || github.ref == 'refs/heads/master'
         run: |
           docker build \
-            -t ${{ secrets.DOCKER_REPO }}/api:latest \
-            -t ${{ secrets.DOCKER_REPO }}/api:${{ github.sha }} \
+            -t ${{ secrets.DOCKER_REPO }}:api-latest \
+            -t ${{ secrets.DOCKER_REPO }}:api-${{ github.sha }} \
             api/
 
       - name: Docker Push (api)
         if: github.ref == 'refs/heads/master'
         run: |
-          docker push ${{ secrets.DOCKER_REPO }}/api:latest
-          docker push ${{ secrets.DOCKER_REPO }}/api:${{ github.sha }}
+          docker push ${{ secrets.DOCKER_REPO }}:api-latest
+          docker push ${{ secrets.DOCKER_REPO }}:api-${{ github.sha }}
 
   build_batch:
     needs: detect_changes
@@ -139,15 +139,15 @@ jobs:
         if: github.ref == 'refs/heads/development' || github.ref == 'refs/heads/master'
         run: |
           docker build \
-            -t ${{ secrets.DOCKER_REPO }}/batch:latest \
-            -t ${{ secrets.DOCKER_REPO }}/batch:${{ github.sha }} \
+            -t ${{ secrets.DOCKER_REPO }}:batch-latest \
+            -t ${{ secrets.DOCKER_REPO }}:batch-${{ github.sha }} \
             batch/
 
       - name: Docker Push (batch)
         if: github.ref == 'refs/heads/master'
         run: |
-          docker push ${{ secrets.DOCKER_REPO }}/batch:latest
-          docker push ${{ secrets.DOCKER_REPO }}/batch:${{ github.sha }}
+          docker push ${{ secrets.DOCKER_REPO }}:batch-latest
+          docker push ${{ secrets.DOCKER_REPO }}:batch-${{ github.sha }}
 
   build_collector:
     needs: detect_changes
@@ -169,15 +169,15 @@ jobs:
         if: github.ref == 'refs/heads/development' || github.ref == 'refs/heads/master'
         run: |
           docker build -f collector/Dockerfile \
-            -t ${{ secrets.DOCKER_REPO }}/collector:latest \
-            -t ${{ secrets.DOCKER_REPO }}/collector:${{ github.sha }} \
+            -t ${{ secrets.DOCKER_REPO }}:collector-latest \
+            -t ${{ secrets.DOCKER_REPO }}:collector-${{ github.sha }} \
             .
 
       - name: Docker Push (collector)
         if: github.ref == 'refs/heads/master'
         run: |
-          docker push ${{ secrets.DOCKER_REPO }}/collector:latest
-          docker push ${{ secrets.DOCKER_REPO }}/collector:${{ github.sha }}
+          docker push ${{ secrets.DOCKER_REPO }}:collector-latest
+          docker push ${{ secrets.DOCKER_REPO }}:collector-${{ github.sha }}
 
   # DEPLOY (workflow_dispatch 전용)
   deploy:
@@ -192,19 +192,19 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i ${{ secrets.EC2_KEY }} ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
 
           if [[ "${{ github.event.inputs.target_service }}" == "all" || "${{ github.event.inputs.target_service }}" == "authentication" ]]; then
-            docker pull ${{ secrets.DOCKER_REPO }}/authentication:latest
+            docker pull ${{ secrets.DOCKER_REPO }}:authentication-latest
           fi
 
           if [[ "${{ github.event.inputs.target_service }}" == "all" || "${{ github.event.inputs.target_service }}" == "api" ]]; then
-            docker pull ${{ secrets.DOCKER_REPO }}/api:latest
+            docker pull ${{ secrets.DOCKER_REPO }}:api-latest
           fi
 
           # if [[ "${{ github.event.inputs.target_service }}" == "all" || "${{ github.event.inputs.target_service }}" == "batch" ]]; then
-          #   docker pull ${{ secrets.DOCKER_REPO }}/batch:latest
+          #   docker pull ${{ secrets.DOCKER_REPO }}:batch-latest
           # fi
 
           # if [[ "${{ github.event.inputs.target_service }}" == "all" || "${{ github.event.inputs.target_service }}" == "collector" ]]; then
-          #   docker pull ${{ secrets.DOCKER_REPO }}/collector:latest
+          #   docker pull ${{ secrets.DOCKER_REPO }}:collector-latest
           # fi
 
           cd /home/ec2-user/tech-gather
