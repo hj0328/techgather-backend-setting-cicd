@@ -208,6 +208,9 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
 
+          echo "DockerHub Login on EC2..."
+          docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}"
+        
           if [[ "${{ github.event.inputs.target_service }}" == "all" || "${{ github.event.inputs.target_service }}" == "authentication" ]]; then
             docker pull ${{ secrets.DOCKER_REPO }}:authentication-latest
           fi
