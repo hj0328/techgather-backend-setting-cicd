@@ -1,4 +1,6 @@
 plugins {
+	id("org.springframework.boot")
+	id("io.spring.dependency-management")
 	kotlin("jvm")
 	kotlin("plugin.spring")
 }
@@ -12,7 +14,13 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     testImplementation("org.springframework.security:spring-security-test")
 
-    runtimeOnly("com.mysql:mysql-connector-j")
+	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+
+	implementation(platform("software.amazon.awssdk:bom:2.28.11"))
+	implementation("software.amazon.awssdk:secretsmanager")
+	implementation("software.amazon.awssdk:auth")
+
+	runtimeOnly("com.mysql:mysql-connector-j")
 
     compileOnly ("org.projectlombok:lombok")
     annotationProcessor ("org.projectlombok:lombok")

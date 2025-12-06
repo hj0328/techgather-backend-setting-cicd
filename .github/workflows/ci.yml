@@ -204,6 +204,25 @@ jobs:
           echo "${{ secrets.EC2_KEY }}" > ec2_key.pem
           chmod 600 ec2_key.pem
 
+      - name: Generate docker-compose.yml for EC2
+        run: |
+          cat << 'EOF' > docker-compose.yml
+          version: "3.8"
+
+          services:
+            api:
+              image: ${{ secrets.DOCKER_REPO }}:api-latest
+              container_name: api
+              ports:
+                - "8888:8888"
+              environment:
+                SPRING_PROFILES_ACTIVE: prod
+              restart: always
+          EOF
+
+      - name: Upload docker-compose.yml
+        run: |
+          scp -o StrictHostKeyChecking=no -i ec2_key.pem docker-compose.yml ec2-user@${{ secrets.EC2_HOST }}:/home/ec2-user/tech-gather/
       - name: Deploy to EC2
         run: |
           ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
@@ -228,7 +247,8 @@ jobs:
           # fi
 
           cd /home/ec2-user/tech-gather
-          docker compose down
-          docker compose up -d --remove-orphans
+          docker-compose down
+          docker-compose pull
+          docker-compose up -d --remove-orphans
 
           EOF
