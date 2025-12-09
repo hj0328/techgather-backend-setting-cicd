@@ -218,6 +218,14 @@ jobs:
               environment:
                 SPRING_PROFILES_ACTIVE: prod
               restart: always
+            authentication:
+              image: ${{ secrets.DOCKER_REPO }}:authentication-latest
+              container_name: authentication
+              ports:
+                - "5080:5080"
+              environment:
+                - SPRING_PROFILES_ACTIVE=prod
+              restart: always
           EOF
 
       - name: Upload docker-compose.yml
