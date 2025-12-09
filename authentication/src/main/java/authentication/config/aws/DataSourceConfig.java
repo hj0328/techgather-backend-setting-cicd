@@ -22,13 +22,10 @@ import javax.sql.DataSource;
 public class DataSourceConfig {
 
     private final ObjectMapper mapper;
+    private final SecretsManagerClient client;
 
     @Bean
     public DataSource dataSource() throws JsonProcessingException {
-        SecretsManagerClient client = SecretsManagerClient.builder()
-                .region(Region.AP_NORTHEAST_2)
-                .build();
-
         GetSecretValueRequest request = GetSecretValueRequest.builder()
                 .secretId("prod/db/parameter")
                 .build();
@@ -36,7 +33,6 @@ public class DataSourceConfig {
         GetSecretValueResponse response = client.getSecretValue(request);
 
         String secretJson = response.secretString();
-
         JsonNode json = mapper.readTree(secretJson);
 
         String url = json.get("url").asText();
