@@ -2,19 +2,22 @@ server:
   port: 5080
   forward-headers-strategy: framework
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
 spring:
   profiles:
-    default: dev   # 아무것도 지정하지 않으면 자동으로 dev
-
+    default: local
   cloud:
     aws:
       region:
         static: ap-northeast-2
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
 
   security:
     oauth2:
@@ -31,8 +34,9 @@ spring:
 ---
 spring:
   config:
-    import: "aws-parameterstore:/tech-gather/dev/cognito/"
-  config.activate.on-profile: dev
+    activate:
+      on-profile: local
+    import: "optional:aws-parameterstore:/tech-gather/local/"
 
   datasource:
     url: jdbc:mysql://localhost:3306/techgather?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
@@ -40,9 +44,21 @@ spring:
     password: apppass
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
 ---
 spring:
   config:
-    import: "aws-parameterstore:/tech-gather/prod/cognito/"
-  config.activate.on-profile: prod
+    activate:
+      on-profile: prod
+    import:
+      - "aws-parameterstore:/tech-gather/prod/"
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+
 
