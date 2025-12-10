@@ -33,7 +33,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/auth/",
                                 "/auth/login/**",
-                                "/auth/logout/**")
+                                "/auth/logout/**",
+                                "/actuator/health")
                         .permitAll()
                         .requestMatchers("/h2-console/**").permitAll() // h2 콘솔만 임시
                         .requestMatchers("/auth/me")
