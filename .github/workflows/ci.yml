@@ -47,155 +47,59 @@ jobs:
 
   build_authentication:
     needs: detect_changes
-    runs-on: ubuntu-latest
-    if: needs.detect_changes.outputs.auth_changed == 'true' ||
+    if: github.event_name == 'push' && (
+      needs.detect_changes.outputs.auth_changed == 'true' || 
       needs.detect_changes.outputs.common_changed == 'true'
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-
-      - name: Build authentication
-        run: ./gradlew :authentication:clean :authentication:build --no-daemon
-
-      - name: Docker Build (authentication)
-        if: github.ref == 'refs/heads/development' || github.ref == 'refs/heads/master'
-        run: |
-          docker build \
-            -t ${{ secrets.DOCKER_REPO }}:authentication-latest \
-            -t ${{ secrets.DOCKER_REPO }}:authentication-${{ github.sha }} \
-            authentication/
-
-      - name: DockerHub Login
-        if: github.ref == 'refs/heads/master'
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Docker Push (authentication)
-        if: github.ref == 'refs/heads/master'
-        run: |
-          docker push ${{ secrets.DOCKER_REPO }}:authentication-latest
-          docker push ${{ secrets.DOCKER_REPO }}:authentication-${{ github.sha }}
+      )
+    uses: ./.github/workflows/common-build.yml
+    with:
+      module: "authentication"
+      gradle_task: "build"
+      docker_context: "authentication"
+      dockerfile: "authentication/Dockerfile"
+      image_name: "authentication"
 
   build_api:
     needs: detect_changes
-    runs-on: ubuntu-latest
-    if: needs.detect_changes.outputs.api_changed == 'true' ||
+    if: github.event_name == 'push' &&  (
+      needs.detect_changes.outputs.api_changed == 'true' || 
       needs.detect_changes.outputs.common_changed == 'true'
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-
-      - name: Build api
-        run: ./gradlew :api:clean :api:build --no-daemon
-
-      - name: Docker Build (api)
-        if: github.ref == 'refs/heads/development' || github.ref == 'refs/heads/master'
-        run: |
-          docker build \
-            -t ${{ secrets.DOCKER_REPO }}:api-latest \
-            -t ${{ secrets.DOCKER_REPO }}:api-${{ github.sha }} \
-            api/
-
-      - name: DockerHub Login
-        if: github.ref == 'refs/heads/master'
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Docker Push (api)
-        if: github.ref == 'refs/heads/master'
-        run: |
-          docker push ${{ secrets.DOCKER_REPO }}:api-latest
-          docker push ${{ secrets.DOCKER_REPO }}:api-${{ github.sha }}
+      )
+    uses: ./.github/workflows/common-build.yml
+    with:
+      module: "api"
+      gradle_task: "build"
+      docker_context: "api"
+      dockerfile: "api/Dockerfile"
+      image_name: "api"
 
   build_batch:
     needs: detect_changes
-    runs-on: ubuntu-latest
-    if: needs.detect_changes.outputs.batch_changed == 'true' ||
+    if: github.event_name == 'push' && (
+      needs.detect_changes.outputs.batch_changed == 'true' || 
       needs.detect_changes.outputs.common_changed == 'true'
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-
-      - name: Build batch
-        run: ./gradlew :batch:clean :batch:build --no-daemon
-
-      - name: Docker Build (batch)
-        if: github.ref == 'refs/heads/development' || github.ref == 'refs/heads/master'
-        run: |
-          docker build \
-            -t ${{ secrets.DOCKER_REPO }}:batch-latest \
-            -t ${{ secrets.DOCKER_REPO }}:batch-${{ github.sha }} \
-            batch/
-
-      - name: DockerHub Login
-        if: github.ref == 'refs/heads/master'
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Docker Push (batch)
-        if: github.ref == 'refs/heads/master'
-        run: |
-          docker push ${{ secrets.DOCKER_REPO }}:batch-latest
-          docker push ${{ secrets.DOCKER_REPO }}:batch-${{ github.sha }}
+      )
+    uses: ./.github/workflows/common-build.yml
+    with:
+      module: "batch"
+      gradle_task: "build"
+      docker_context: "batch"
+      dockerfile: "batch/Dockerfile"
+      image_name: "batch"
 
   build_collector:
     needs: detect_changes
-    runs-on: ubuntu-latest
-    if: needs.detect_changes.outputs.collector_changed == 'true' ||
+    if: github.event_name == 'push' && (
+      needs.detect_changes.outputs.collector_changed == 'true' ||
       needs.detect_changes.outputs.common_changed == 'true'
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-
-      - name: Build collector
-        run: ./gradlew :collector:bootJar --no-daemon
-
-      - name: Docker Build (collector)
-        if: github.ref == 'refs/heads/development' || github.ref == 'refs/heads/master'
-        run: |
-          docker build -f collector/Dockerfile \
-            -t ${{ secrets.DOCKER_REPO }}:collector-latest \
-            -t ${{ secrets.DOCKER_REPO }}:collector-${{ github.sha }} \
-            .
-
-      - name: DockerHub Login
-        if: github.ref == 'refs/heads/master'
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Docker Push (collector)
-        if: github.ref == 'refs/heads/master'
-        run: |
-          docker push ${{ secrets.DOCKER_REPO }}:collector-latest
-          docker push ${{ secrets.DOCKER_REPO }}:collector-${{ github.sha }}
+      )
+    uses: ./.github/workflows/common-build.yml
+    with:
+      module: "collector"
+      gradle_task: "bootJar"
+      docker_context: "."
+      dockerfile: "collector/Dockerfile"
+      image_name: "collector"
 
   deploy:
     runs-on: ubuntu-latest
@@ -207,7 +111,8 @@ jobs:
       - name: Load module config
         id: config
         run: |
-          echo "CONFIG=$(cat deploy/modules.json | base64)" >> $GITHUB_OUTPUT
+          CONFIG=$(base64 -w 0 deploy/modules.json)
+          echo "CONFIG=$CONFIG" >> "$GITHUB_OUTPUT"
 
       - name: Create SSH key file
         run: |
