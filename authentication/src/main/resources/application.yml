@@ -62,3 +62,6 @@ spring:
       ddl-auto: none
 
 
+  jpa:
+    hibernate:
+      ddl-auto: none
