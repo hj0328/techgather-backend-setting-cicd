@@ -1,6 +1,16 @@
 server:
   port: 5080
   forward-headers-strategy: framework
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
 spring:
   profiles:
     default: local
@@ -46,6 +56,11 @@ spring:
       on-profile: prod
     import:
       - "aws-parameterstore:/tech-gather/prod/"
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+
 
   jpa:
     hibernate:

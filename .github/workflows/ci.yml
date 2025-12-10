@@ -1,4 +1,4 @@
-name: CICD
+name: CI/CD Pipeline
 
 on:
   push:
@@ -13,11 +13,8 @@ on:
         type: choice
         description: "배포할 서비스 선택"
         options:
-          - all
           - authentication
           - api
-#          - batch
-#          - collector
 
 jobs:
   detect_changes:
@@ -28,6 +25,7 @@ jobs:
       batch_changed: ${{ steps.filter.outputs.batch }}
       collector_changed: ${{ steps.filter.outputs.collector }}
       common_changed: ${{ steps.filter.outputs.common }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -55,6 +53,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -77,6 +76,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+
       - name: Docker Push (authentication)
         if: github.ref == 'refs/heads/master'
         run: |
@@ -91,6 +91,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -113,6 +114,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+
       - name: Docker Push (api)
         if: github.ref == 'refs/heads/master'
         run: |
@@ -127,6 +129,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -149,6 +152,7 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+
       - name: Docker Push (batch)
         if: github.ref == 'refs/heads/master'
         run: |
@@ -163,6 +167,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -185,78 +190,93 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+
       - name: Docker Push (collector)
         if: github.ref == 'refs/heads/master'
         run: |
           docker push ${{ secrets.DOCKER_REPO }}:collector-latest
           docker push ${{ secrets.DOCKER_REPO }}:collector-${{ github.sha }}
 
-  # DEPLOY (workflow_dispatch 전용)
   deploy:
-    # needs: [build_authentication, build_api, build_batch, build_collector]
-    needs: [ build_authentication, build_api ]
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch'
 
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Load module config
+        id: config
+        run: |
+          echo "CONFIG=$(cat deploy/modules.json | base64)" >> $GITHUB_OUTPUT
+
       - name: Create SSH key file
         run: |
           echo "${{ secrets.EC2_KEY }}" > ec2_key.pem
           chmod 600 ec2_key.pem
 
-      - name: Generate docker-compose.yml for EC2
-        run: |
-          cat << 'EOF' > docker-compose.yml
-          version: "3.8"
-
-          services:
-            api:
-              image: ${{ secrets.DOCKER_REPO }}:api-latest
-              container_name: api
-              ports:
-                - "8888:8888"
-              environment:
-                SPRING_PROFILES_ACTIVE: prod
-              restart: always
-            authentication:
-              image: ${{ secrets.DOCKER_REPO }}:authentication-latest
-              container_name: authentication
-              ports:
-                - "5080:5080"
-              environment:
-                - SPRING_PROFILES_ACTIVE=prod
-              restart: always
-          EOF
-
-      - name: Upload docker-compose.yml
-        run: |
-          scp -o StrictHostKeyChecking=no -i ec2_key.pem docker-compose.yml ec2-user@${{ secrets.EC2_HOST }}:/home/ec2-user/tech-gather/
       - name: Deploy to EC2
         run: |
-          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
+          TARGET="${{ github.event.inputs.target_service }}"
+          CONFIG_JSON=$(echo "${{ steps.config.outputs.CONFIG }}" | base64 --decode)
 
-          echo "DockerHub Login on EC2..."
+          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ secrets.EC2_HOST }} << EOF
+
+          if ! command -v jq &> /dev/null; then
+            sudo yum install -y jq
+          fi
+
           docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}"
-        
-          if [[ "${{ github.event.inputs.target_service }}" == "all" || "${{ github.event.inputs.target_service }}" == "authentication" ]]; then
-            docker pull ${{ secrets.DOCKER_REPO }}:authentication-latest
-          fi
 
-          if [[ "${{ github.event.inputs.target_service }}" == "all" || "${{ github.event.inputs.target_service }}" == "api" ]]; then
-            docker pull ${{ secrets.DOCKER_REPO }}:api-latest
-          fi
+          CONFIG='$CONFIG_JSON'
 
-          # if [[ "${{ github.event.inputs.target_service }}" == "all" || "${{ github.event.inputs.target_service }}" == "batch" ]]; then
-          #   docker pull ${{ secrets.DOCKER_REPO }}:batch-latest
-          # fi
+          deploy_service() {
+            local NAME=\$1
 
-          # if [[ "${{ github.event.inputs.target_service }}" == "all" || "${{ github.event.inputs.target_service }}" == "collector" ]]; then
-          #   docker pull ${{ secrets.DOCKER_REPO }}:collector-latest
-          # fi
+            local PORT=\$(echo "\$CONFIG" | jq -r ".\"$TARGET\".port")
+            local IMAGE=\$(echo "\$CONFIG" | jq -r ".\"$TARGET\".image")
+            local HEALTH=\$(echo "\$CONFIG" | jq -r ".\"$TARGET\".health")
 
-          cd /home/ec2-user/tech-gather
-          docker-compose down
-          docker-compose pull
-          docker-compose up -d --remove-orphans
+            echo "Deploying \$NAME (port \$PORT, image \$IMAGE)"
+
+            docker rename \$NAME \${NAME}_backup 2>/dev/null || true
+            docker pull ${{ secrets.DOCKER_REPO }}:\$IMAGE
+
+            docker stop \$NAME || true
+            docker rm \$NAME || true
+
+            docker run -d \
+              --name \$NAME \
+              -p \$PORT:\$PORT \
+              -e SPRING_PROFILES_ACTIVE=prod \
+              --restart always \
+              ${{ secrets.DOCKER_REPO }}:\$IMAGE
+
+            echo "Waiting for health check: \$HEALTH"
+            for i in {1..20}; do
+              STATUS=\$(curl -s -o /dev/null -w "%{http_code}" "\$HEALTH" || true)
+
+              if [[ "\$STATUS" == "200" ]]; then
+                echo "\$NAME health check successful!"
+                docker rm -f \${NAME}_backup 2>/dev/null || true
+                return 0
+              fi
+
+              echo "Health check failed (\$STATUS). Retry \$i/20..."
+              sleep 3
+            done
+
+            echo "Health check failed. Rolling back..."
+
+            docker stop \$NAME
+            docker rm \$NAME
+
+            docker rename \${NAME}_backup \$NAME
+            docker start \$NAME
+
+            echo "Rollback completed for \$NAME"
+            exit 1
+          }
+
+          deploy_service "$TARGET"
 
           EOF
