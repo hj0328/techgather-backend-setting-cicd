@@ -1,5 +1,10 @@
 name: CI/CD Pipeline
 
+env:
+  DOCKER_REPO: ${{ secrets.DOCKER_REPO }}
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
 on:
   push:
     branches:
@@ -45,7 +50,7 @@ jobs:
               - 'application/**'
               - 'domain/**'
 
-  build_authentication:
+  authentication:
     needs: detect_changes
     if: github.event_name == 'push' && (
       needs.detect_changes.outputs.auth_changed == 'true' || 
@@ -59,7 +64,7 @@ jobs:
       dockerfile: "authentication/Dockerfile"
       image_name: "authentication"
 
-  build_api:
+  api:
     needs: detect_changes
     if: github.event_name == 'push' &&  (
       needs.detect_changes.outputs.api_changed == 'true' || 
@@ -73,7 +78,7 @@ jobs:
       dockerfile: "api/Dockerfile"
       image_name: "api"
 
-  build_batch:
+  batch:
     needs: detect_changes
     if: github.event_name == 'push' && (
       needs.detect_changes.outputs.batch_changed == 'true' || 
@@ -87,7 +92,7 @@ jobs:
       dockerfile: "batch/Dockerfile"
       image_name: "batch"
 
-  build_collector:
+  collector:
     needs: detect_changes
     if: github.event_name == 'push' && (
       needs.detect_changes.outputs.collector_changed == 'true' ||
