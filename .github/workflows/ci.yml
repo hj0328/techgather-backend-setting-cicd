@@ -139,70 +139,14 @@ jobs:
           echo "${{ secrets.EC2_KEY }}" > ec2_key.pem
           chmod 600 ec2_key.pem
 
-      - name: Deploy to EC2
+      - name: Run deploy script on EC2
         run: |
           TARGET="${{ github.event.inputs.target_service }}"
-          CONFIG_JSON=$(echo "${{ steps.config.outputs.CONFIG }}" | base64 --decode)
-
-          ssh -o StrictHostKeyChecking=no -i ec2_key.pem ec2-user@${{ secrets.EC2_HOST }} << EOF
-
-          if ! command -v jq &> /dev/null; then
-            sudo yum install -y jq
-          fi
-
-          docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}"
-
-          CONFIG='$CONFIG_JSON'
-
-          deploy_service() {
-            local RAW_NAME="$1"
-            local NAME=$(echo "$RAW_NAME" | xargs)
-            
-            local PORT=\$(echo "\$CONFIG" | jq -r ".\"$TARGET\".port")
-            local IMAGE=\$(echo "\$CONFIG" | jq -r ".\"$TARGET\".image")
-            local HEALTH=\$(echo "\$CONFIG" | jq -r ".\"$TARGET\".health")
-
-            echo "Deploying \$NAME (port \$PORT, image \$IMAGE)"
-
-            docker rename \$NAME \${NAME}_backup 2>/dev/null || true
-            docker pull ${{ secrets.DOCKER_REPO }}:\$IMAGE
-
-            docker stop \$NAME || true
-            docker rm \$NAME || true
-
-            docker run -d \
-              --name \$NAME \
-              -p \$PORT:\$PORT \
-              -e SPRING_PROFILES_ACTIVE=prod \
-              --restart always \
-              ${{ secrets.DOCKER_REPO }}:\$IMAGE
-
-            echo "Waiting for health check: \$HEALTH"
-            for i in {1..20}; do
-              STATUS=\$(curl -s -o /dev/null -w "%{http_code}" "\$HEALTH" || true)
-
-              if [[ "\$STATUS" == "200" ]]; then
-                echo "\$NAME health check successful!"
-                docker rm -f \${NAME}_backup 2>/dev/null || true
-                return 0
-              fi
-
-              echo "Health check failed (\$STATUS). Retry \$i/20..."
-              sleep 3
-            done
-
-            echo "Health check failed. Rolling back..."
-
-            docker stop \$NAME
-            docker rm \$NAME
-
-            docker rename \${NAME}_backup \$NAME
-            docker start \$NAME
-
-            echo "Rollback completed for \$NAME"
-            exit 1
-          }
-
-          deploy_service "$TARGET"
-
-          EOF
+          
+          scp deploy/docker-compose.yml ec2-user@${{ secrets.EC2_HOST }}:/home/ec2-user/deploy/
+          
+          ssh -i ec2_key.pem ec2-user@EC2_HOST "
+            cd /home/ec2-user/deploy;
+            export DOCKER_REPO=${{ secrets.DOCKER_REPO }};
+            ./deploy.sh $TARGET
+          "
