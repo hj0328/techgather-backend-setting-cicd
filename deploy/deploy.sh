@@ -11,6 +11,10 @@ docker-compose pull $TARGET
 echo "Restarting service..."
 docker-compose up -d $TARGET
 
+CONFIG="/home/ec2-user/tech-gather/services.json"
+PORT=$(jq -r ".\"$TARGET\".port" $CONFIG)
+HEALTH_PATH=$(jq -r ".\"$TARGET\".health" $CONFIG)
+
 HEALTH_URL="http://localhost:${PORT}${HEALTH_PATH}"
 
 for i in {1..20}; do
