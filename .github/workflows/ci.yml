@@ -1,10 +1,5 @@
 name: CI/CD Pipeline
 
-env:
-  DOCKER_REPO: ${{ secrets.DOCKER_REPO }}
-  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-
 on:
   push:
     branches:
@@ -63,6 +58,10 @@ jobs:
       docker_context: "authentication"
       dockerfile: "authentication/Dockerfile"
       image_name: "authentication"
+    secrets:
+      DOCKER_REPO: ${{ secrets.DOCKER_REPO }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
   api:
     needs: detect_changes
@@ -77,6 +76,10 @@ jobs:
       docker_context: "api"
       dockerfile: "api/Dockerfile"
       image_name: "api"
+    secrets:
+      DOCKER_REPO: ${{ secrets.DOCKER_REPO }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
   batch:
     needs: detect_changes
@@ -91,6 +94,10 @@ jobs:
       docker_context: "batch"
       dockerfile: "batch/Dockerfile"
       image_name: "batch"
+    secrets:
+      DOCKER_REPO: ${{ secrets.DOCKER_REPO }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
   collector:
     needs: detect_changes
@@ -105,6 +112,10 @@ jobs:
       docker_context: "."
       dockerfile: "collector/Dockerfile"
       image_name: "collector"
+    secrets:
+      DOCKER_REPO: ${{ secrets.DOCKER_REPO }}
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
 
   deploy:
     runs-on: ubuntu-latest
