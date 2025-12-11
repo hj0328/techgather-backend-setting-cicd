@@ -19,6 +19,7 @@ dependencies {
 	implementation(platform("software.amazon.awssdk:bom:2.28.11"))
 	implementation("software.amazon.awssdk:secretsmanager")
 	implementation("software.amazon.awssdk:auth")
+	implementation("org.springframework.boot:spring-boot-starter-actuator")
 
 	runtimeOnly("com.mysql:mysql-connector-j")
 
