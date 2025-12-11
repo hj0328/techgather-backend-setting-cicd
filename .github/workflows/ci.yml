@@ -140,8 +140,9 @@ jobs:
           CONFIG='$CONFIG_JSON'
 
           deploy_service() {
-            local NAME=\$1
-
+            local RAW_NAME="$1"
+            local NAME=$(echo "$RAW_NAME" | xargs)
+            
             local PORT=\$(echo "\$CONFIG" | jq -r ".\"$TARGET\".port")
             local IMAGE=\$(echo "\$CONFIG" | jq -r ".\"$TARGET\".image")
             local HEALTH=\$(echo "\$CONFIG" | jq -r ".\"$TARGET\".health")
