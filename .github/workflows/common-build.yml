@@ -51,17 +51,17 @@ jobs:
         run: |
           docker build \
             -f ${{ inputs.dockerfile }} \
-            -t ${DOCKER_REPO}:${{ inputs.image_name }}-latest \
-            -t ${DOCKER_REPO}:${{ inputs.image_name }}-${{ github.sha }} \
+            -t ${{ secrets.DOCKER_REPO }}:${{ inputs.image_name }}-latest \
+            -t ${{ secrets.DOCKER_REPO }}:${{ inputs.image_name }}-${{ github.sha }} \
             ${{ inputs.docker_context }}
 
       - name: DockerHub Login
         if: github.ref == 'refs/heads/master'
         run: |
-          docker login -u "${DOCKER_USERNAME}" -p "${DOCKER_PASSWORD}"
+          docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}"
 
       - name: Docker Push
         if: github.ref == 'refs/heads/master'
         run: |
-          docker push ${DOCKER_REPO}:${{ inputs.image_name }}-latest
-          docker push ${DOCKER_REPO}:${{ inputs.image_name }}-${{ github.sha }}
+          docker push ${{ secrets.DOCKER_REPO }}:${{ inputs.image_name }}-latest
+          docker push ${{ secrets.DOCKER_REPO }}:${{ inputs.image_name }}-${{ github.sha }}
