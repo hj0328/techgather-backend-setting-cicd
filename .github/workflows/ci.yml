@@ -138,15 +138,23 @@ jobs:
         run: |
           echo "${{ secrets.EC2_KEY }}" > ec2_key.pem
           chmod 600 ec2_key.pem
+      - name: Upload deploy files
+        run: |
+          scp -i ec2_key.pem -o StrictHostKeyChecking=no \
+            deploy/docker-compose.yml \
+            ec2-user@${{ secrets.EC2_HOST }}:/home/ec2-user/tech-gather/
+      
+          scp -i ec2_key.pem -o StrictHostKeyChecking=no \
+            deploy/deploy.sh \
+            ec2-user@${{ secrets.EC2_HOST }}:/home/ec2-user/tech-gather/
 
-      - name: Run deploy script on EC2
+      - name: Deploy on EC2
         run: |
           TARGET="${{ github.event.inputs.target_service }}"
-          
-          scp deploy/docker-compose.yml ec2-user@${{ secrets.EC2_HOST }}:/home/ec2-user/deploy/
-          
-          ssh -i ec2_key.pem ec2-user@EC2_HOST "
-            cd /home/ec2-user/deploy;
+                    
+          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_HOST }} "
+            cd /home/ec2-user/tech-gather/
+            chmod +x deploy.sh
             export DOCKER_REPO=${{ secrets.DOCKER_REPO }};
             ./deploy.sh $TARGET
           "
