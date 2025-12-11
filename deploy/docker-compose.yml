@@ -9,11 +9,6 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
     restart: always
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8888/actuator/health"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
 
   authentication:
     image: "${DOCKER_REPO}:authentication-latest"
@@ -23,8 +18,3 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
     restart: always
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5080/actuator/health"]
-      interval: 5s
-      timeout: 3s
-      retries: 5
