@@ -50,7 +50,7 @@ jobs:
           ./gradlew :${{ inputs.module }}:${{ inputs.gradle_task }} --no-daemon
 
       - name: Docker Build
-        if: github.ref == 'refs/heads/development' || github.ref == 'refs/heads/master'
+        if: inputs.branch_name == 'development' || inputs.branch_name == 'master'
         run: |
           docker build \
             -f ${{ inputs.dockerfile }} \
@@ -59,12 +59,12 @@ jobs:
             ${{ inputs.docker_context }}
 
       - name: DockerHub Login
-        if: github.ref == 'refs/heads/master'
+        if: inputs.branch_name == 'master'
         run: |
           docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}"
 
       - name: Docker Push
-        if: github.ref == 'refs/heads/master'
+        if: inputs.branch_name == 'master'
         run: |
           docker push ${{ secrets.DOCKER_REPO }}:${{ inputs.image_name }}-latest
           docker push ${{ secrets.DOCKER_REPO }}:${{ inputs.image_name }}-${{ github.sha }}
