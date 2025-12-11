@@ -142,18 +142,18 @@ jobs:
         run: |
           scp -i ec2_key.pem -o StrictHostKeyChecking=no \
             deploy/docker-compose.yml \
-            ec2-user@${{ secrets.EC2_HOST }}:/home/ec2-user/deploy/
+            ec2-user@${{ secrets.EC2_HOST }}:/home/ec2-user/tech-gather/
       
           scp -i ec2_key.pem -o StrictHostKeyChecking=no \
             deploy/deploy.sh \
-            ec2-user@${{ secrets.EC2_HOST }}:/home/ec2-user/deploy/
+            ec2-user@${{ secrets.EC2_HOST }}:/home/ec2-user/tech-gather/
 
       - name: Deploy on EC2
         run: |
           TARGET="${{ github.event.inputs.target_service }}"
                     
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no ec2-user@${{ secrets.EC2_HOST }} "
-            cd /home/ec2-user/deploy
+            cd /home/ec2-user/tech-gather/
             chmod +x deploy.sh
             export DOCKER_REPO=${{ secrets.DOCKER_REPO }};
             ./deploy.sh $TARGET
