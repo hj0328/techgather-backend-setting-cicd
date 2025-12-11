@@ -25,6 +25,7 @@ class SecurityConfig {
                     .requestMatchers("/posts/**").permitAll()
                     .requestMatchers("/swagger-ui/**").permitAll()
                     .requestMatchers("/v3/api-docs/**").permitAll()
+                    .requestMatchers("/actuator/health").permitAll()
                     .anyRequest().authenticated()
             }
         return http.build()
