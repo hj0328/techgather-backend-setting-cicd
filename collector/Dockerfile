@@ -26,3 +26,4 @@ COPY --from=build /app/collector/build/libs/*.jar app.jar
 # 포트 EXPOSE 없음
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]
 ###
+
