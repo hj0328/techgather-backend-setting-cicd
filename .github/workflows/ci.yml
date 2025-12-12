@@ -59,10 +59,7 @@ jobs:
       dockerfile: "authentication/Dockerfile"
       image_name: "authentication"
       branch_name: ${{ github.ref_name }}
-    secrets:
-      DOCKER_REPO: ${{ secrets.DOCKER_REPO }}
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+    secrets: inherit
 
   api:
     needs: detect_changes
@@ -78,10 +75,7 @@ jobs:
       dockerfile: "api/Dockerfile"
       image_name: "api"
       branch_name: ${{ github.ref_name }}
-    secrets:
-      DOCKER_REPO: ${{ secrets.DOCKER_REPO }}
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+    secrets: inherit
 
   batch:
     needs: detect_changes
@@ -97,10 +91,7 @@ jobs:
       dockerfile: "batch/Dockerfile"
       image_name: "batch"
       branch_name: ${{ github.ref_name }}
-    secrets:
-      DOCKER_REPO: ${{ secrets.DOCKER_REPO }}
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+    secrets: inherit
 
   collector:
     needs: detect_changes
@@ -116,10 +107,7 @@ jobs:
       dockerfile: "collector/Dockerfile"
       image_name: "collector"
       branch_name: ${{ github.ref_name }}
-    secrets:
-      DOCKER_REPO: ${{ secrets.DOCKER_REPO }}
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-      DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+    secrets: inherit
 
   deploy:
     runs-on: ubuntu-latest
