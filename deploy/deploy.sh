@@ -2,13 +2,30 @@
 
 TARGET="$1"
 
+
+if [ -z "$TARGET" ]; then
+  echo "Usage: ./deploy.sh <service-name>"
+  exit 1
+fi
+
 cd /home/ec2-user/tech-gather
 export DOCKER_REPO="${DOCKER_REPO}"
 
-echo "Pulling image.. "
+echo "Stopping $TARGET..."
+docker-compose stop $TARGET
+
+echo "Removing $TARGET container..."
+docker-compose rm -f $TARGET
+
+echo "Removing old $TARGET images..."
+docker images --format "{{.Repository}}:{{.Tag}} {{.ID}}" \
+ | awk -v target="$DOCKER_REPO:${TARGET}" '$1 ~ "^"target {print $2}' \
+ | xargs -r docker rmi -f
+
+echo "Pulling latest image.. "
 docker-compose pull $TARGET
 
-echo "Restarting service..."
+echo "Starting $TARGET..."
 docker-compose up -d $TARGET
 
 CONFIG="/home/ec2-user/tech-gather/services.json"
