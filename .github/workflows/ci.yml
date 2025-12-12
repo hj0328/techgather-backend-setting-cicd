@@ -45,12 +45,18 @@ jobs:
               - 'application/**'
               - 'domain/**'
 
-  authentication:
+  authentication-test:
     needs: detect_changes
     if: github.event_name == 'push' && (
-      needs.detect_changes.outputs.auth_changed == 'true' || 
+      needs.detect_changes.outputs.auth_changed == 'true' ||
       needs.detect_changes.outputs.common_changed == 'true'
       )
+    uses: ./.github/workflows/common-test.yml
+    with:
+      module: "authentication"
+
+  authentication:
+    needs: authentication-test
     uses: ./.github/workflows/common-build.yml
     with:
       module: "authentication"
@@ -61,12 +67,17 @@ jobs:
       branch_name: ${{ github.ref_name }}
     secrets: inherit
 
-  api:
+  api-test:
     needs: detect_changes
-    if: github.event_name == 'push' &&  (
-      needs.detect_changes.outputs.api_changed == 'true' || 
+    if: github.event_name == 'push' && (
+      needs.detect_changes.outputs.api_changed == 'true' ||
       needs.detect_changes.outputs.common_changed == 'true'
       )
+    uses: ./.github/workflows/common-test.yml
+    with:
+      module: "api"
+  api:
+    needs: api-test
     uses: ./.github/workflows/common-build.yml
     with:
       module: "api"
@@ -77,12 +88,17 @@ jobs:
       branch_name: ${{ github.ref_name }}
     secrets: inherit
 
-  batch:
+  batch-test:
     needs: detect_changes
     if: github.event_name == 'push' && (
-      needs.detect_changes.outputs.batch_changed == 'true' || 
+      needs.detect_changes.outputs.batch_changed == 'true' ||
       needs.detect_changes.outputs.common_changed == 'true'
       )
+    uses: ./.github/workflows/common-test.yml
+    with:
+      module: "batch"
+  batch:
+    needs: batch-test
     uses: ./.github/workflows/common-build.yml
     with:
       module: "batch"
@@ -93,12 +109,17 @@ jobs:
       branch_name: ${{ github.ref_name }}
     secrets: inherit
 
-  collector:
+  collector-test:
     needs: detect_changes
     if: github.event_name == 'push' && (
       needs.detect_changes.outputs.collector_changed == 'true' ||
       needs.detect_changes.outputs.common_changed == 'true'
       )
+    uses: ./.github/workflows/common-test.yml
+    with:
+      module: "collector"
+  collector:
+    needs: collector-test
     uses: ./.github/workflows/common-build.yml
     with:
       module: "collector"
