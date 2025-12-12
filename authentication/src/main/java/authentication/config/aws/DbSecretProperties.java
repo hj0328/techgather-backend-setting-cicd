@@ -1,14 +1,12 @@
 package authentication.config.aws;
 
+import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 @Getter
-@NoArgsConstructor
+@Builder
 public class DbSecretProperties {
     private String username;
     private String password;
     private String url;
-    private String endpoint;
-    private String database;
 }
