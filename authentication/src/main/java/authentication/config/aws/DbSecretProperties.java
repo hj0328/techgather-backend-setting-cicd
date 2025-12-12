@@ -1,7 +1,12 @@
 package authentication.config.aws;
 
-public record DbSecretProperties(
-        String username,
-        String password,
-        String url
-) {}
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Getter
+@NoArgsConstructor
+public class DbSecretProperties {
+    private String username;
+    private String password;
+    private String url;
+}
