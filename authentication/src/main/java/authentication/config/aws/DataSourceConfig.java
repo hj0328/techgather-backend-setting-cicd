@@ -22,9 +22,9 @@ public class DataSourceConfig {
         DbSecretProperties properties = dbSecretLoader.load("prod/db/parameter");
 
         HikariConfig config = new HikariConfig();
-        config.setJdbcUrl(properties.url());
-        config.setUsername(properties.username());
-        config.setPassword(properties.password());
+        config.setJdbcUrl(properties.getUrl());
+        config.setUsername(properties.getUsername());
+        config.setPassword(properties.getPassword());
         config.setDriverClassName("com.mysql.cj.jdbc.Driver");
 
         return new HikariDataSource(config);
