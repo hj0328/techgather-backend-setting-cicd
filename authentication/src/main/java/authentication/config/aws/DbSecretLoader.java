@@ -3,6 +3,7 @@ package authentication.config.aws;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.secretsmanager.SecretsManagerClient;
@@ -16,6 +17,7 @@ import java.util.Optional;
 @Component
 @Profile("prod")
 @RequiredArgsConstructor
+@Slf4j
 public class DbSecretLoader {
 
     private final SecretsManagerClient secretsManagerClient;
@@ -33,6 +35,7 @@ public class DbSecretLoader {
                     .build();
 
         } catch (Exception e) {
+            log.error("Failed to load DB secret. raw cause = {}", e.getMessage(), e);
             throw new IllegalStateException(
                     "Failed to load DB secret: " + secretName, e
             );
