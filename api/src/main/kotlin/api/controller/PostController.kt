@@ -1,6 +1,5 @@
 package api.controller
 
-
 import api.controller.dto.request.PostSearchCondition
 import api.controller.dto.request.TagFilterCondition
 import api.controller.dto.response.PostResponseList
