@@ -25,7 +25,7 @@ class SwaggerConfig {
             .servers(
                 listOf(
                     Server()
-                        .url("http://localhost:8888/api")
+                        .url("http://16.184.13.235:8888")
                         .description("Local/Development Server"),
                 )
             )
