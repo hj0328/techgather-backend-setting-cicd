@@ -3,28 +3,9 @@ server:
   servlet:
     context-path: /api
 
-<<<<<<< HEAD
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-    enabled: true
-  swagger-ui:
-    path: /swagger-ui.html
-    enabled: true
-    operations-sorter: method
-    tags-sorter: alpha
-    display-request-duration: true
-
----
-spring:
-  config:
-    activate:
-      on-profile: local
-=======
 spring:
   profiles:
     active: local
->>>>>>> upstream/development
 
   datasource:
     url: jdbc:mysql://localhost:3306/techgather
@@ -42,7 +23,6 @@ spring:
         format_sql: true
         show_sql: true
 
-<<<<<<< HEAD
 ---
 spring:
   config:
@@ -64,7 +44,6 @@ management:
   endpoint:
     health:
       show-details: never
-=======
 springdoc:
   api-docs:
     path: /v3/api-docs
@@ -75,4 +54,3 @@ springdoc:
     operations-sorter: method
     tags-sorter: alpha
     display-request-duration: true
->>>>>>> upstream/development
