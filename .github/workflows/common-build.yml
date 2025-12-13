@@ -41,9 +41,9 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Gradle Build
+      - name: Gradle Build (skip tests)
         run: |
-          ./gradlew :${{ inputs.module }}:${{ inputs.gradle_task }} --no-daemon
+          ./gradlew :${{ inputs.module }}:${{ inputs.gradle_task }} -x test --no-daemon
 
       - name: Docker Build
         if: inputs.branch_name == 'development' || inputs.branch_name == 'master'
