@@ -13,18 +13,20 @@ on:
         type: choice
         description: "배포할 서비스 선택"
         options:
-          - authentication
           - api
+          - authentication
+          - batch
+          - collector
 
 jobs:
   detect_changes:
     runs-on: ubuntu-latest
     outputs:
-      auth_changed: ${{ steps.filter.outputs.auth }}
-      api_changed: ${{ steps.filter.outputs.api }}
-      batch_changed: ${{ steps.filter.outputs.batch }}
-      collector_changed: ${{ steps.filter.outputs.collector }}
-      common_changed: ${{ steps.filter.outputs.common }}
+      authentication: ${{ steps.filter.outputs.authentication }}
+      api: ${{ steps.filter.outputs.api }}
+      batch: ${{ steps.filter.outputs.batch }}
+      collector: ${{ steps.filter.outputs.collector }}
+      common: ${{ steps.filter.outputs.common }}
 
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +35,7 @@ jobs:
         id: filter
         with:
           filters: |
-            auth:
+            authentication:
               - 'authentication/**'
             api:
               - 'api/**'
@@ -45,90 +47,60 @@ jobs:
               - 'application/**'
               - 'domain/**'
 
-  authentication-test:
+  ci:
     needs: detect_changes
-    if: github.event_name == 'push' && (
-      needs.detect_changes.outputs.auth_changed == 'true' ||
-      needs.detect_changes.outputs.common_changed == 'true'
-      )
-    uses: ./.github/workflows/common-test.yml
-    with:
-      module: "authentication"
+    runs-on: ubuntu-latest
 
-  authentication:
-    needs: authentication-test
-    uses: ./.github/workflows/common-build.yml
-    with:
-      module: "authentication"
-      gradle_task: "build"
-      docker_context: "authentication"
-      dockerfile: "authentication/Dockerfile"
-      image_name: "authentication"
-      branch_name: ${{ github.ref_name }}
-    secrets: inherit
+    strategy:
+      matrix:
+        include:
+          - module: authentication
+            gradle_task: build
+            changed: ${{ needs.detect_changes.outputs.authentication }}
+          - module: api
+            gradle_task: build
+            changed: ${{ needs.detect_changes.outputs.api }}
+          - module: batch
+            gradle_task: build
+            changed: ${{ needs.detect_changes.outputs.batch }}
+          - module: collector
+            gradle_task: jar
+            changed: ${{ needs.detect_changes.outputs.collector }}
 
-  api-test:
-    needs: detect_changes
-    if: github.event_name == 'push' && (
-      needs.detect_changes.outputs.api_changed == 'true' ||
-      needs.detect_changes.outputs.common_changed == 'true'
-      )
-    uses: ./.github/workflows/common-test.yml
-    with:
-      module: "api"
-  api:
-    needs: api-test
-    uses: ./.github/workflows/common-build.yml
-    with:
-      module: "api"
-      gradle_task: "build"
-      docker_context: "api"
-      dockerfile: "api/Dockerfile"
-      image_name: "api"
-      branch_name: ${{ github.ref_name }}
-    secrets: inherit
+    steps:
+      - uses: actions/checkout@v4
 
-  batch-test:
-    needs: detect_changes
-    if: github.event_name == 'push' && (
-      needs.detect_changes.outputs.batch_changed == 'true' ||
-      needs.detect_changes.outputs.common_changed == 'true'
-      )
-    uses: ./.github/workflows/common-test.yml
-    with:
-      module: "batch"
-  batch:
-    needs: batch-test
-    uses: ./.github/workflows/common-build.yml
-    with:
-      module: "batch"
-      gradle_task: "build"
-      docker_context: "batch"
-      dockerfile: "batch/Dockerfile"
-      image_name: "batch"
-      branch_name: ${{ github.ref_name }}
-    secrets: inherit
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
-  collector-test:
-    needs: detect_changes
-    if: github.event_name == 'push' && (
-      needs.detect_changes.outputs.collector_changed == 'true' ||
-      needs.detect_changes.outputs.common_changed == 'true'
-      )
-    uses: ./.github/workflows/common-test.yml
-    with:
-      module: "collector"
-  collector:
-    needs: collector-test
-    uses: ./.github/workflows/common-build.yml
-    with:
-      module: "collector"
-      gradle_task: "bootJar"
-      docker_context: "."
-      dockerfile: "collector/Dockerfile"
-      image_name: "collector"
-      branch_name: ${{ github.ref_name }}
-    secrets: inherit
+      - name: Test (${{ matrix.module }})
+        if: |
+          github.ref_name == 'development' ||
+          matrix.changed == 'true' ||
+          needs.detect_changes.outputs.common == 'true'
+        run: ./gradlew :${{ matrix.module }}:test
+
+      - name: Build (${{ matrix.module }})
+        if: |
+          github.ref_name == 'development' ||
+          matrix.changed == 'true' ||
+          needs.detect_changes.outputs.common == 'true'
+        run: ./gradlew :${{ matrix.module }}:${{ matrix.gradle_task }}
+
+      - name: Docker Build & Push
+        if: |
+          github.ref_name == 'master'
+        run: |
+          docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}"
+
+          docker build \
+            -f ${{ matrix.module }}/Dockerfile \
+            -t ${{ secrets.DOCKER_REPO }}:${{ matrix.module }}-latest \
+            ./${{ matrix.module }}
+
+          docker push ${{ secrets.DOCKER_REPO }}:${{ matrix.module }}-latest
 
   deploy:
     runs-on: ubuntu-latest
@@ -164,6 +136,6 @@ jobs:
             
             docker login -u '${{ secrets.DOCKER_USERNAME }}' -p '${{ secrets.DOCKER_PASSWORD }}'
 
-            export DOCKER_REPO=${{ secrets.DOCKER_REPO }};
+            export DOCKER_REPO='${{ secrets.DOCKER_REPO }};'
             ./deploy.sh $TARGET
           "
