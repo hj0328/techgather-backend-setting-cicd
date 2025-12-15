@@ -30,6 +30,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: dorny/paths-filter@v3
         id: filter
@@ -77,14 +79,12 @@ jobs:
 
       - name: Test (${{ matrix.module }})
         if: |
-          github.ref_name == 'development' ||
           matrix.changed == 'true' ||
           needs.detect_changes.outputs.common == 'true'
         run: ./gradlew :${{ matrix.module }}:test
 
       - name: Build (${{ matrix.module }})
         if: |
-          github.ref_name == 'development' ||
           matrix.changed == 'true' ||
           needs.detect_changes.outputs.common == 'true'
         run: ./gradlew :${{ matrix.module }}:${{ matrix.gradle_task }}
@@ -103,8 +103,8 @@ jobs:
           docker push ${{ secrets.DOCKER_REPO }}:${{ matrix.module }}-latest
 
   deploy:
+    if: github.event_name == 'workflow_dispatch' && github.ref_name == 'master'
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
 
     steps:
       - uses: actions/checkout@v4
@@ -139,3 +139,10 @@ jobs:
             export DOCKER_REPO='${{ secrets.DOCKER_REPO }};'
             ./deploy.sh $TARGET
           "
+  deploy_blocked:
+    if: github.event_name == 'workflow_dispatch' && github.ref_name != 'master'
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "Deploy is allowed only on master branch"
+          exit 1
