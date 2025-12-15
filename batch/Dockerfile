@@ -1,10 +1,10 @@
-FROM eclipse-temurin:17-jdk AS build
+FROM amazoncorretto:21-al2023 AS build
 WORKDIR batch
 ARG JAR_FILE=build/libs/*.jar
 COPY ${JAR_FILE} batch.jar
 RUN java -Djarmode=layertools -jar batch.jar extract
 
-FROM eclipse-temurin:17-jre AS runtime
+FROM amazoncorretto:21-al2023 AS runtime
 EXPOSE 7500
 WORKDIR batch
 COPY --from=build batch/dependencies/ ./
@@ -13,4 +13,3 @@ COPY --from=build batch/snapshot-dependencies/ ./
 RUN true
 COPY --from=build batch/application/ ./
 ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
-# #
