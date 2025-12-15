@@ -35,7 +35,7 @@ jobs:
         id: filter
         with:
           filters: |
-            auth:
+            authentication:
               - 'authentication/**'
             api:
               - 'api/**'
@@ -56,17 +56,16 @@ jobs:
         include:
           - module: authentication
             gradle_task: build
+            changed: ${{ needs.detect_changes.outputs.authentication }}
           - module: api
             gradle_task: build
+            changed: ${{ needs.detect_changes.outputs.api }}
           - module: batch
             gradle_task: build
+            changed: ${{ needs.detect_changes.outputs.batch }}
           - module: collector
             gradle_task: jar
-
-    if: |
-      github.ref_name == 'development' ||
-      needs.detect_changes.outputs[matrix.module] == 'true' ||
-      needs.detect_changes.outputs.common == 'true'
+            changed: ${{ needs.detect_changes.outputs.collector }}
 
     steps:
       - uses: actions/checkout@v4
@@ -77,28 +76,31 @@ jobs:
           distribution: 'temurin'
 
       - name: Test (${{ matrix.module }})
+        if: |
+          github.ref_name == 'development' ||
+          matrix.changed == 'true' ||
+          needs.detect_changes.outputs.common == 'true'
         run: ./gradlew :${{ matrix.module }}:test
 
       - name: Build (${{ matrix.module }})
+        if: |
+          github.ref_name == 'development' ||
+          matrix.changed == 'true' ||
+          needs.detect_changes.outputs.common == 'true'
         run: ./gradlew :${{ matrix.module }}:${{ matrix.gradle_task }}
 
-      - name: DockerHub Login
-        if: inputs.branch_name == 'master'
+      - name: Docker Build & Push
+        if: |
+          github.ref_name == 'master'
         run: |
           docker login -u "${{ secrets.DOCKER_USERNAME }}" -p "${{ secrets.DOCKER_PASSWORD }}"
 
-      - name: Docker Build
-        if: inputs.branch_name == 'master'
-        run: |
           docker build \
             -f ${{ matrix.module }}/Dockerfile \
             -t ${{ secrets.DOCKER_REPO }}:${{ matrix.module }}-latest \
             ./${{ matrix.module }}
 
-      - name: Docker Push
-        if: inputs.branch_name == 'master'
-        run: |
-          docker push ${{ secrets.DOCKER_REPO }}:${{ inputs.image_name }}-latest
+          docker push ${{ secrets.DOCKER_REPO }}:${{ matrix.module }}-latest
 
   deploy:
     runs-on: ubuntu-latest
@@ -134,6 +136,6 @@ jobs:
             
             docker login -u '${{ secrets.DOCKER_USERNAME }}' -p '${{ secrets.DOCKER_PASSWORD }}'
 
-            export DOCKER_REPO=${{ secrets.DOCKER_REPO }};
+            export DOCKER_REPO='${{ secrets.DOCKER_REPO }};'
             ./deploy.sh $TARGET
           "
