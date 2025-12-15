@@ -18,3 +18,4 @@ COPY --from=build /authentication/spring-boot-loader/ ./
 COPY --from=build /authentication/application/ ./
 
 ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
+#
