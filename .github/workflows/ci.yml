@@ -139,7 +139,7 @@ jobs:
             
             docker login -u '${{ secrets.DOCKER_USERNAME }}' -p '${{ secrets.DOCKER_PASSWORD }}'
 
-            export DOCKER_REPO='${{ secrets.DOCKER_REPO }};'
+            export DOCKER_REPO='${{ secrets.DOCKER_REPO }}'
             ./deploy.sh $TARGET
           "
   deploy_blocked:
