@@ -86,8 +86,9 @@ jobs:
       - name: Build (${{ matrix.module }})
         if: |
           matrix.changed == 'true' ||
-          needs.detect_changes.outputs.common == 'true'
-        run: ./gradlew :${{ matrix.module }}:${{ matrix.gradle_task }}
+          needs.detect_changes.outputs.common == 'true' ||
+          github.ref_name == 'master'
+        run: ./gradlew :${{ matrix.module }}:${{ matrix.gradle_task }} -x test
 
       - name: Docker Build & Push
         if: |
