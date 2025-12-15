@@ -52,6 +52,7 @@ jobs:
 
   ci:
     needs: detect_changes
+    if: needs.detect_changes.result == 'success'
     runs-on: ubuntu-latest
 
     strategy:
