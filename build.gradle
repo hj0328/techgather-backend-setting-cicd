@@ -1,7 +1,7 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '3.5.6'
-	id 'io.spring.dependency-management' version '1.1.7'
+	id 'org.springframework.boot' version '3.5.6' apply false
+	id 'io.spring.dependency-management' version '1.1.7' apply false
 	id 'org.jetbrains.kotlin.jvm' version '2.1.0' apply false
 	id 'org.jetbrains.kotlin.plugin.spring' version '2.1.0' apply false
 }
@@ -14,11 +14,34 @@ java {
 		languageVersion = JavaLanguageVersion.of(17)
 	}
 }
+subprojects {
+
+	apply plugin: 'java'
+	apply plugin: 'io.spring.dependency-management'
+
+	java {
+		sourceCompatibility = JavaVersion.VERSION_17
+		targetCompatibility = JavaVersion.VERSION_17
+	}
+
+	repositories {
+		mavenCentral()
+	}
+
+	dependencies {
+		implementation 'org.jetbrains.kotlin:kotlin-reflect'
+		testImplementation 'org.springframework.boot:spring-boot-starter-test'
+		testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	}
+
+	tasks.named('test') {
+		useJUnitPlatform()
+	}
+}
 
 allprojects {
 
 	apply plugin: 'java'
-	apply plugin: 'org.springframework.boot'
 	apply plugin: 'io.spring.dependency-management'
 
 	sourceCompatibility = JavaVersion.VERSION_17
@@ -28,12 +51,17 @@ allprojects {
 		useJUnitPlatform()
 	}
 
+	dependencyManagement {
+		imports {
+			mavenBom "org.springframework.boot:spring-boot-dependencies:3.5.6"
+		}
+	}
+
 	repositories {
 		mavenCentral()
 	}
 
 	dependencies {
-		implementation 'org.springframework.boot:spring-boot-starter'
 		implementation 'org.jetbrains.kotlin:kotlin-reflect'
 		testImplementation 'org.springframework.boot:spring-boot-starter-test'
 		testImplementation 'org.jetbrains.kotlin:kotlin-test-junit5'
@@ -41,9 +69,9 @@ allprojects {
 	}
 }
 
-bootJar {
-	enabled = false
-}
+//bootJar {
+//	enabled = false
+//}
 
 jar {
 	enabled = false
