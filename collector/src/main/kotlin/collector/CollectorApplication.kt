@@ -1,6 +1,7 @@
 package collector
 
 import collector.worker.config.TargetProperties
+import org.springframework.boot.WebApplicationType
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
@@ -10,5 +11,7 @@ import org.springframework.boot.runApplication
 class CollectorApplication
 
 fun main(args: Array<String>) {
-    runApplication<CollectorApplication>(*args)
+    runApplication<CollectorApplication>(*args) {
+        setWebApplicationType(WebApplicationType.NONE)
+    }
 }
